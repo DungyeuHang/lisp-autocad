@@ -6,7 +6,8 @@
 
 ;Lệnh move  = 2
 (defun c:2 ()
-    (command "move"))
+(command "osmode" 16383)
+(command "move"))
 
 ;Lệnh insert = 3 không dùng được lisp
 
@@ -21,11 +22,13 @@
 
 ;lệnh mocoro -11
 (defun c:11 ()
-    (command "mocoro"))
+(command "osmode" 16383)
+(command "mocoro"))
 
 ;lệnh mirror -33
 (defun c:33 ()
-    (command "mirror"))
+  (command "osmode" 16383)
+  (command "mirror"))
 
 ;lệnh matchprop -44
 (defun c:44 ()
@@ -246,7 +249,7 @@
      ) ;ket thuc cond
   (setq d1 (list 0 0))
   (command "osmode" "16384")
- (repeat 10
+ (while
 (setq doituong1 (ssget))
   (setq doituong2 (ssget))
   (command "stretch" doituong1 "" d1 (list (- (car d1) (* hs b)) (cadr d1) ) "") ;(command "stretch" )
@@ -273,7 +276,7 @@
      ) ;ket thuc cond
   (command "osmode" "16384")
   (setq d1 (list 0 0))
-(repeat 10
+(while
   (setq doituong1 (ssget))
   (setq doituong2 (ssget))
   (command "stretch" doituong1 "" d1 (list (car d1) (+ (cadr d1) (* hs b)) ) "") ;(command "stretch" )
@@ -450,6 +453,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 )
 
 (defun c:vvd (/ prefix pt counter allText currentDef dxVal dyVal dxStr dyStr lastPt finalPt ptText secondPt)
+  (command "_.LAYER" "_SET" "_mss.phantom" "")
   (command "osmode" "5")
   ;; 1. Nhập tiền tố (ví dụ: "od_on_ol")
   (setq prefix (getstring "\nNhập tiền tố: "))
