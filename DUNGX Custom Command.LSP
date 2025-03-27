@@ -1,5 +1,6 @@
 ;Lệnh line = 1
 (defun c:1 ()
+(command "osmode" 16383)
 (command "_.LAYER" "_SET" "_mss.bao" "")
 (command "line"))
 
@@ -43,8 +44,9 @@
 
 ;lệnh dimlinear -dd
 (defun c:dd ()
-    (command "_.LAYER" "_SET" "_mss.kichthuoc" "")
-    (command "dimlinear"))
+  (command "osmode" 16383)
+  (command "_.LAYER" "_SET" "_mss.kichthuoc" "")
+  (command "dimlinear"))
 
 ;lệnh find-f1
 (defun c:f1 ()
