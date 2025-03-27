@@ -1,5 +1,6 @@
 ;Lệnh line = 1
 (defun c:1 ()
+(command "_.LAYER" "_SET" "_mss.bao" "")
 (command "line"))
 
 ;Lệnh move  = 2
@@ -42,6 +43,7 @@
 
 ;lệnh dimlinear -dd
 (defun c:dd ()
+    (command "_.LAYER" "_SET" "_mss.kichthuoc" "")
     (command "dimlinear"))
 
 ;lệnh find-f1
@@ -520,5 +522,5 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 (defun c:1v()
 (command "VPORTS" "SI" )
 )
-
 ;;;;; END of VIEWS ;;;;;;
+
