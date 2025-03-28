@@ -1,12 +1,15 @@
 ;Lệnh line = 1
 (defun c:1 ()
-(command "osmode" 16383)
-(command "_.LAYER" "_SET" "_mss.bao" "")
-(command "line"))
+  (setvar "osmode" 16383)
+  ;(command "osmode" 16383)
+  (setvar "clayer" "_mss.bao")
+  ;(command "_.LAYER" "_SET" "_mss.bao" "")
+  (command "line"))
 
 ;Lệnh move  = 2
 (defun c:2 ()
-(command "osmode" 16383)
+;(command "osmode" 16383)
+  (setvar "osmode" 16383)
 (command "move"))
 
 ;Lệnh insert = 3 không dùng được lisp
@@ -22,12 +25,14 @@
 
 ;lệnh mocoro -11
 (defun c:11 ()
-(command "osmode" 16383)
+  ;(command "osmode" 16383)
+  (setvar "osmode" 16383)
 (command "mocoro"))
 
 ;lệnh mirror -33
 (defun c:33 ()
-  (command "osmode" 16383)
+  ;(command "osmode" 16383)
+  (setvar "osmode" 16383)
   (command "mirror"))
 
 ;lệnh matchprop -44
@@ -47,8 +52,9 @@
 
 ;lệnh dimlinear -dd
 (defun c:dd ()
-  (command "osmode" 16383)
-  (command "_.LAYER" "_SET" "_mss.kichthuoc" "")
+  (setvar "osmode" 16383)
+  ;(command "_.LAYER" "_SET" "_mss.kichthuoc" "")
+  (setvar "clayer" "_mss.kichthuoc")
   (command "dimlinear"))
 
 ;lệnh find-f1
@@ -65,7 +71,8 @@
 
 ;Center mid mode c1
 (defun c:c1()
-  (command "osmode" "1030")
+  ;(command "osmode" "1030")
+  (setvar "osmode" 1030)
   (princ))
 ;end of c1
 
@@ -81,7 +88,8 @@
 
 ;       <<< Copy to mid and erase cs -CES >>>         ;
 (defun c:CES (/ dt diemdau ktc kt d1 d2 )
-  (command "osmode" 16384)
+  ;(command "osmode" 16384)
+  (setvar "osmode" 16384)
   (setq diemdau (list 0 0))
   (setq ktc (getreal "\nnhap kich thuoc canh chinh"))
   (setq kt (+ ktc 5.5))
@@ -91,7 +99,9 @@
   (command "copy" dt ""  diemdau d1 "")
   (command "copy" dt ""  diemdau d2 "")
  (command "erase" dt "")
-  (command "osmode" 16383)
+  
+  ;(command "osmode" 16383)
+  (setvar "osmode" 16383)
   (princ)
 )
 ;;;;;;;;;; end of CES ;;;;;;;;;
@@ -100,9 +110,11 @@
 
 ;;;;;;;;;;;;;;;;;;             < Dungx insert -dungx >            ;;;;;;;;;;;;;;
 (defun c:dungx (/ pt time date-string year month day formatted-date new-pt new-pt1 i)
-  (command "_.LAYER" "_SET" "_mss.phantom" "")
+  ;(command "_.LAYER" "_SET" "_mss.phantom" "")
+  (setvar "clayer" "_mss.phantom")
   (setq i 1) ;; Bắt đầu đếm từ 1
-  (command "osmode" "16384")
+  ;(command "osmode" "16384")
+  (setvar "osmode" 16384)
 
   ;; Vòng lặp vô hạn, chỉ dừng khi người dùng nhấn Enter hoặc Space
   (while (setq pt (getpoint "\nChọn điểm chèn (Nhấn Enter để thoát): "))
@@ -146,8 +158,10 @@
   )
 
   ;; Khi thoát vòng lặp, chạy các lệnh cuối
-  (command "osmode" "16383")
-  (command "_.LAYER" "_SET" "_mss.kichthuoc" "")
+  ;(command "osmode" "16383")
+  (setvar "osmode" 16383)
+  ;(command "_.LAYER" "_SET" "_mss.kichthuoc" "")
+  (setvar "clayer" "_mss.kichthuoc")
   (princ)
 )
 
@@ -158,7 +172,8 @@
 
 ;       <<<<<<<< full osmode -SS >>>>>>>          ;
 ( defun c:ss()
- (command "osmode" "16383")
+ ;(command "osmode" "16383")
+  (setvar "osmode" 16383)
   (princ)
  )
 ;;;;;;;;;;; end of SS ;;;;;;;
@@ -167,7 +182,8 @@
 
 ;         <<<<<<<<<<<< Keo Canh Lech danh cho cua 4 canh - KCL >>>>>>>>>> ;
 ( defun c:KCL(/ d1 diemtam ktk doituong1 doituong2 doituong3)
-  (command "osmode" 16384)
+  ;(command "osmode" 16384)
+  (setvar "osmode" 16384)
   (setq d1 (list 0 0))
   (setq ktk (getreal "\nhap kich thuoc keo"))
   (setq doituong1 (ssget))
@@ -176,7 +192,8 @@
   (command "stretch" doituong2 "" d1 (list (+ (car d1) ktk) (cadr d1) ) "")
   (setq doituong3 (ssget))
   (command "stretch" doituong3 "" d1 (list (car d1) (+ (cadr d1) ktk ) ) "")
-  (command "osmode" 16383)   
+  ;(command "osmode" 16383) 
+  (setvar "osmode" 16383)  
   (princ)
  )
 ;;;;;;;;;;;; end of KCL ;;;;;;;;;;
@@ -186,7 +203,8 @@
 
 ;     <<<<<<<<<< Keo cua so 3 canh -KCS3 >>>>>>>>>>>> ;
 (defun c:kcs3 (/ d1 kto dk kt1 kt4 ktk doituongx doituongm doituong1 doituong2 doituong3)
-  (command "osmode" "16384")
+  ;(command "osmode" "16384")
+  (setvar "osmode" 16384)
   (setq d1 (list 0 0))
   (setq kto (getreal "\nNhập kích thước ô chờ: "))
   (initget 0)
@@ -205,7 +223,8 @@
   (command "stretch" doituong2 "" d1 (list (+ (car d1) ktk) (cadr d1) ) "") ;keo phai 
   (setq doituong3 (ssget))
   (command "stretch" doituong3 "" d1 (list (car d1) (+ (cadr d1) ktk ) ) "") ;keophoi
-  (command "osmode" "16383")   
+  (setvar "osmode" 16383)
+  ;(command "osmode" "16383")   
   (princ)
   )
 ;;;;;;;;; end of KCS3 ;;;;;;;;
@@ -248,14 +267,16 @@
      (setq hs -1 )) ; 
      ) ;ket thuc cond
   (setq d1 (list 0 0))
-  (command "osmode" "16384")
+  ;(command "osmode" "16384")
+  (setvar "osmode" 16384)
  (while
 (setq doituong1 (ssget))
   (setq doituong2 (ssget))
   (command "stretch" doituong1 "" d1 (list (- (car d1) (* hs b)) (cadr d1) ) "") ;(command "stretch" )
   (command "stretch" doituong2 "" d1 (list (+ (car d1) (* hs b)) (cadr d1) ) "")
 )
-  (command "osmode" "16383")
+  ;(command "osmode" "16383")
+  (setvar "osmode" 16383)
 )
 ;;;;;   end of SX   ;;;;;
 
@@ -274,7 +295,8 @@
     ((= keyword "g") ;
      (setq hs -1 )) ; 
      ) ;ket thuc cond
-  (command "osmode" "16384")
+  ;(command "osmode" "16384")
+  (setvar "osmode" 16384)
   (setq d1 (list 0 0))
 (while
   (setq doituong1 (ssget))
@@ -282,13 +304,15 @@
   (command "stretch" doituong1 "" d1 (list (car d1) (+ (cadr d1) (* hs b)) ) "") ;(command "stretch" )
   (command "stretch" doituong2 "" d1 (list (car d1) (- (cadr d1) (* hs b)) ) "")
 )
-  (command "osmode" "16383")
+  ;(command "osmode" "16383")
+  (setvar "osmode" 16383)
   )
 ;;;;;;;;;;; end of SY ;;;;;;;;;;; 
 
 ;         <<<<<<<  Ve lo song -VLS >>>>>>
 (defun c:vls(/ dd dt diemtam doituong sosong1 kctam)
-  (command "osmode" "16384")
+  ;(command "osmode" "16384")
+  (setvar "osmode" 16384)
   (setq dd (getreal "\nnhap chieu dai do"))
   (setq dt (+ (/ dd 2) 70)) ;chieu dai tinh
   (setq diemtam (list 0 0))
@@ -297,14 +321,16 @@
   (setq kctam (/ dt sosong1))
   (command "copy" doituong "" diemtam "_array" sosong1 (list (+ (car diemtam) kctam) (cadr diemtam) ) )
   (command "copy" doituong "" diemtam "_array" sosong1 (list (- (car diemtam) kctam) (cadr diemtam) ) )
-  (command "osmode" "16383")
+  ;(command "osmode" "16383")
+  (setvar "osmode" 16383)
   (princ)
 )
 ;;;;;;;;;;;; end of VLS ;;;;;;;;
 
 ;       <<<<<<<<<<< VE SONG 3 KIEU -VSS >>>>>>>>> ;
 (defun c:vss (/ dd dk keyword diemtam doituong sls_1 sls_test tam_lo_song kctam sl sosong1 diemdim1 diemdim2 diemdim3 diemdim4 diemdim5 diemdim6 diemdim7 diemdim8 diemtext)
-(command "osmode" "16383")
+;(command "osmode" "16383")
+(setvar "osmode" 16383)
 (initget 1 "tr th v") ;tron thoi vuong
   (setq keyword (getkword "Ban muon ve song tron <tr>, thoi <th> hay song vuong <v>"))
   (cond
@@ -342,7 +368,8 @@
 
   (setq sosong1 (+ (fix (/ sl 2)) 1))
   
-  (command "osmode" "16384")
+  ;(command "osmode" "16384")
+  (setvar "osmode" 16384)
   (command "copy" doituong "" diemtam "_array" sosong1 (list (+ (car diemtam) kctam) (cadr diemtam) ) )
   (command "copy" doituong "" diemtam "_array" sosong1 (list (- (car diemtam) kctam) (cadr diemtam) ) )
   (setq diemdim1 (list (+ (car diemtam) kctam) (cadr diemtam))) ;diemdim1 cach diemtam =kctam
@@ -362,7 +389,8 @@
   (command "dimlinear"  diemdim7 diemdim8 diemdim2)
   (command "text" diemtext 55 "0" (strcat (rtos sl) " SONG"))
 
-  (command "osmode" 16383)
+  ;(command "osmode" 16383)
+  (setvar "osmode" 16383)
   (print "so song la")
   (print sl)
   (princ)
@@ -453,8 +481,10 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 )
 
 (defun c:vvd (/ prefix pt counter allText currentDef dxVal dyVal dxStr dyStr lastPt finalPt ptText secondPt)
-  (command "_.LAYER" "_SET" "_mss.phantom" "")
-  (command "osmode" "5")
+  ;(command "_.LAYER" "_SET" "_mss.phantom" "")
+  (setvar "clayer" "_mss.phantom")
+  ;(command "osmode" "5")
+  (setvar "osmode" 5)
   ;; 1. Nhập tiền tố (ví dụ: "od_on_ol")
   (setq prefix (getstring "\nNhập tiền tố: "))
   (setq counter 1)
@@ -507,7 +537,8 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
       (command "MTEXT" finalPt secondPt allText "")
     )
   )
-  (command "osmode" "16383")
+  ;(command "osmode" "16383")
+  (setvar "osmode" 16383)
   (princ)
 )
 
