@@ -233,15 +233,24 @@
 
 
 ;          <<<<<<<< LayOff 5 layer de lam phoi -OOO >>>>>>>> ;
-(defun c:ooo()
-       (command "layoff" "" "layer" "off" "_mss.dut" "" "Y" "" )
-       (command "layoff" "" "layer" "off" "_mss.cat" "" "Y" "" )
-  	(command "layoff" "" "layer" "off" "_mss.phantom" "" "Y" "" )
-  	(command "layoff" "" "layer" "off" "_mss.pro" "" "Y" "" )
-	(command "layoff" "" "layer" "off" "_mss.canh" "" "Y" "" )
-       (command "layoff" "" "layer" "off" "DUNGX" "" "Y" "" )
-(princ)
+(defun c:ooo ()
+  (setq doc (vla-get-activedocument (vlax-get-acad-object))) ;; Lấy tài liệu hiện tại
+  (setq layman (vla-get-layers doc)) ;; Lấy danh sách layer
+
+  ;; Danh sách các layer cần tắt
+  (setq layers '("_mss.dut" "_mss.cat" "_mss.phantom" "_mss.pro" "_mss.canh" "DUNGX"))
+
+  ;; Lặp qua từng layer và tắt nếu tồn tại
+  (foreach layer layers
+    (setq lay (vl-catch-all-apply 'vla-item (list layman layer))) ;; Kiểm tra layer có tồn tại không
+    (if (and lay (not (vl-catch-all-error-p lay))) ;; Nếu layer tồn tại
+      (vla-put-layeron lay :vlax-false) ;; Tắt layer
+    )
   )
+
+  (princ)
+)
+
 ;;;;;;;;;;; end of OOO ;;;;;;;;;
 
 ;         <<<<< set last -LL >>>>
