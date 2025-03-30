@@ -490,9 +490,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 )
 
 (defun c:vvd (/ prefix pt counter allText currentDef dxVal dyVal dxStr dyStr lastPt finalPt ptText secondPt)
-  ;(command "_.LAYER" "_SET" "_mss.phantom" "")
   (setvar "clayer" "_mss.phantom")
-  ;(command "osmode" "5")
   (setvar "osmode" 5)
   ;; 1. Nhập tiền tố (ví dụ: "od_on_ol")
   (setq prefix (getstring "\nNhập tiền tố: "))
@@ -501,14 +499,20 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
   ;; 2. Nhập các điểm
   (while (setq pt (getpoint (strcat "\nChọn điểm " (itoa counter) " (ESC/Enter để dừng): ")))
-    ;; Vẽ hình tròn bán kính 2 tại điểm đã chọn
+    ;; Vẽ hình tròn bán kính 1 tại điểm đã chọn
     (command "CIRCLE" pt "1")
+    
     ;; Xác định vị trí đặt MTEXT cho định nghĩa của điểm:
-    ;; đặt tại pt cộng thêm 1 đơn vị theo trục Y
-    (setq ptText (list (car pt) (+ (cadr pt) 1) (if (numberp (caddr pt)) (caddr pt) 0)))
+    ;; Nếu counter lẻ: đặt text bên trên circle (y + 1),
+    ;; Nếu counter chẵn: đặt text bên dưới circle (y - 1).
+    (setq ptText (if (= (rem counter 2) 1)
+                 (list (car pt) (+ (cadr pt) 1) (if (numberp (caddr pt)) (caddr pt) 0))
+                 (list (car pt) (- (cadr pt) 1) (if (numberp (caddr pt)) (caddr pt) 0))
+          ))
+
     
     (if (= counter 1)
-      ;; Điểm đầu tiên: ví dụ: od_on_ol_p1 = APoint(od_on_ol_p1.x, od_on_ol_p1.y)
+      ;; Điểm đầu tiên: vd: od_on_ol_p1 = APoint(od_on_ol_p1.x, od_on_ol_p1.y)
       (setq currentDef (strcat prefix "_p" (itoa counter)
                                 " = APoint(" 
                                 prefix "_p" (itoa counter) ".x, " 
@@ -526,9 +530,14 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
       )
     )
     
-    ;; Vẽ MTEXT cho định nghĩa của điểm tại ptText.
-    ;; Xác định hộp MTEXT bằng cách cộng thêm (190,2) vào ptText như yêu cầu.
-    (setq secondPt (list (+ (car ptText) 190) (+ (cadr ptText) 2)))
+    ;; Xác định hộp MTEXT dựa theo vị trí ptText:
+    ;; Nếu counter lẻ, đặt hộp bên trên (x + 190, y + 2);
+    ;; nếu counter chẵn, đặt hộp bên dưới (x + 190, y - 2).
+    (setq secondPt (if (= (rem counter 2) 1)
+                   (list (+ (car ptText) 50) (+ (cadr ptText) 0))
+                   (list (+ (car ptText) 50) (- (cadr ptText) 2))
+            ))
+
     (command "MTEXT" ptText secondPt currentDef "")
     
     ;; Tích lũy định nghĩa vào chuỗi allText, mỗi định nghĩa xuống dòng bằng "\n"
@@ -546,13 +555,13 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
       (command "MTEXT" finalPt secondPt allText "")
     )
   )
-  ;(command "osmode" "16383")
   (setvar "osmode" 16383)
   (princ)
 )
 
 (princ "\nGõ VE_DIEM để chạy chương trình.\n")
 (princ)
+
 ;;;;;; End VVD ;;;;;;
 
 ;;;;; START of VIEWS ;;;;;;
