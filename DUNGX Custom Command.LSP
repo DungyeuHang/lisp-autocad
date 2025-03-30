@@ -500,14 +500,14 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   ;; 2. Nhập các điểm
   (while (setq pt (getpoint (strcat "\nChọn điểm " (itoa counter) " (ESC/Enter để dừng): ")))
     ;; Vẽ hình tròn bán kính 1 tại điểm đã chọn
-    (command "CIRCLE" pt "1")
+    (command "CIRCLE" pt "0.01")
     
     ;; Xác định vị trí đặt MTEXT cho định nghĩa của điểm:
     ;; Nếu counter lẻ: đặt text bên trên circle (y + 1),
     ;; Nếu counter chẵn: đặt text bên dưới circle (y - 1).
     (setq ptText (if (= (rem counter 2) 1)
-                 (list (car pt) (+ (cadr pt) 1) (if (numberp (caddr pt)) (caddr pt) 0))
-                 (list (car pt) (- (cadr pt) 1) (if (numberp (caddr pt)) (caddr pt) 0))
+                 (list (car pt) (+ (cadr pt) 0.01) (if (numberp (caddr pt)) (caddr pt) 0))
+                 (list (car pt) (- (cadr pt) 0.01) (if (numberp (caddr pt)) (caddr pt) 0))
           ))
 
     
@@ -534,8 +534,8 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
     ;; Nếu counter lẻ, đặt hộp bên trên (x + 190, y + 2);
     ;; nếu counter chẵn, đặt hộp bên dưới (x + 190, y - 2).
     (setq secondPt (if (= (rem counter 2) 1)
-                   (list (+ (car ptText) 50) (+ (cadr ptText) 0))
-                   (list (+ (car ptText) 50) (- (cadr ptText) 2))
+                   (list (+ (car ptText) 1) (+ (cadr ptText) 0.01))
+                   (list (+ (car ptText) 10) (- (cadr ptText) 0.1))
             ))
 
     (command "MTEXT" ptText secondPt currentDef "")
@@ -551,7 +551,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   (if (> (strlen allText) 0)
     (progn
       (setq finalPt (getpoint "\nChọn vị trí để đặt text tổng hợp: "))
-      (setq secondPt (list (+ (car finalPt) 190) (+ (cadr finalPt) 2)))
+      (setq secondPt (list (+ (car finalPt) 10) (+ (cadr finalPt) 0.1)))
       (command "MTEXT" finalPt secondPt allText "")
     )
   )
