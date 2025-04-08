@@ -5,7 +5,10 @@
   ;(command "osmode" 16383)
   (setvar "clayer" "_mss.bao")
   ;(command "_.LAYER" "_SET" "_mss.bao" "")
-  (command "line"))
+  (command "line")
+  (princ)
+)
+
 
 ;Lệnh move  = 2
 (defun c:2 ()
@@ -125,7 +128,7 @@
   (setvar "osmode" 16384)
 
   ;; Vòng lặp vô hạn, chỉ dừng khi người dùng nhấn Enter hoặc Space
-  (while (setq pt (getpoint "\nChọn điểm chèn (Nhấn Enter để thoát): "))
+  (while (setq pt (getpoint "\n💬 Chọn điểm chèn (Nhấn Enter để thoát): "))
     
     ;; Kiểm tra nếu block "SIGNATURE" không tồn tại
     (if (not (tblsearch "block" "SIGNATURE"))
@@ -160,7 +163,7 @@
     ;; Hiển thị chuỗi văn bản
     (command "text" new-pt 55 "0" formatted-date)
     (command "text" new-pt1 55 "0" (strcat "NO." (itoa i))) ;; Đếm số thứ tự và chuyển thành chuỗi
-
+    (prompt "\n🚀 Đã xử lý...")
     ;; Tăng giá trị đếm
     (setq i (1+ i))
   )
