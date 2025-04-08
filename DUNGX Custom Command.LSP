@@ -1,5 +1,6 @@
 ;Lệnh line = 1
 (defun c:1 ()
+  (prompt "\n🚀 Đang xử lý...")
   (setvar "osmode" 16383)
   ;(command "osmode" 16383)
   (setvar "clayer" "_mss.bao")
@@ -10,6 +11,7 @@
 (defun c:2 ()
 ;(command "osmode" 16383)
   (setvar "osmode" 16383)
+  (prompt "\n🚀 Đang xử lý...")
 (command "move"))
 
 ;Lệnh insert = 3 không dùng được lisp
@@ -32,26 +34,31 @@
 ;lệnh mirror -33
 (defun c:33 ()
   ;(command "osmode" 16383)
+  (prompt "\n🚀 Đang xử lý...")
   (setvar "osmode" 16383)
   (command "mirror"))
 
 ;lệnh matchprop -44
 (defun c:44 ()
-    (command "matchprop"))
+  (prompt "\n🚀 Đang xử lý...")
+  (command "matchprop"))
 
 ;lệnh copy -cc không lặp lại nhiều lần
 
 
 ;lệnh quickselect- qq
 (defun c:qq ()
-    (command "qselect"))
+  (prompt "\n🚀 Đang xử lý...")
+  (command "qselect"))
 
 ;lệnh filter - ff
 (defun c:ff ()
-    (command "filter"))
+  (prompt "\n🚀 Đang xử lý...")
+  (command "filter"))
 
 ;lệnh dimlinear -dd
 (defun c:dd ()
+  (prompt "\n🚀 Đang xử lý...")
   (setvar "osmode" 16383)
   ;(command "_.LAYER" "_SET" "_mss.kichthuoc" "")
   (setvar "clayer" "_mss.kichthuoc")
@@ -111,6 +118,7 @@
 ;;;;;;;;;;;;;;;;;;             < Dungx insert -dungx >            ;;;;;;;;;;;;;;
 (defun c:dungx (/ pt time date-string year month day formatted-date new-pt new-pt1 i)
   ;(command "_.LAYER" "_SET" "_mss.phantom" "")
+  (prompt "\n🚀 Đang xử lý...")
   (setvar "clayer" "_mss.phantom")
   (setq i 1) ;; Bắt đầu đếm từ 1
   ;(command "osmode" "16384")
@@ -162,6 +170,7 @@
   (setvar "osmode" 16383)
   ;(command "_.LAYER" "_SET" "_mss.kichthuoc" "")
   (setvar "clayer" "_mss.kichthuoc")
+  (prompt "\n✅ ĐÃ XỬ LÝ XONG.")
   (princ)
 )
 
@@ -182,6 +191,7 @@
 
 ;         <<<<<<<<<<<< Keo Canh Lech danh cho cua 4 canh - KCL >>>>>>>>>> ;
 ( defun c:KCL(/ d1 diemtam ktk doituong1 doituong2 doituong3)
+  (prompt "\n🚀 Đang xử lý...")
   ;(command "osmode" 16384)
   (setvar "osmode" 16384)
   (setq d1 (list 0 0))
@@ -193,7 +203,8 @@
   (setq doituong3 (ssget))
   (command "stretch" doituong3 "" d1 (list (car d1) (+ (cadr d1) ktk ) ) "")
   ;(command "osmode" 16383) 
-  (setvar "osmode" 16383)  
+  (setvar "osmode" 16383)
+  (prompt "\n✅ ĐÃ XỬ LÝ XONG.")  
   (princ)
  )
 ;;;;;;;;;;;; end of KCL ;;;;;;;;;;
@@ -203,6 +214,7 @@
 
 ;     <<<<<<<<<< Keo cua so 3 canh -KCS3 >>>>>>>>>>>> ;
 (defun c:kcs3 (/ d1 kto dk kt1 kt4 ktk doituongx doituongm doituong1 doituong2 doituong3)
+  (prompt "\n🚀 Đang xử lý...")
   ;(command "osmode" "16384")
   (setvar "osmode" 16384)
   (setq d1 (list 0 0))
@@ -225,6 +237,7 @@
   (command "stretch" doituong3 "" d1 (list (car d1) (+ (cadr d1) ktk ) ) "") ;keophoi
   (setvar "osmode" 16383)
   ;(command "osmode" "16383")   
+  (prompt "\n✅ ĐÃ XỬ LÝ XONG.")
   (princ)
   )
 ;;;;;;;;; end of KCS3 ;;;;;;;;
@@ -234,6 +247,7 @@
 
 ;          <<<<<<<< LayOff 5 layer de lam phoi -OOO >>>>>>>> ;
 (defun c:ooo ()
+  (prompt "\n🚀 Đang xử lý...")
   (setq doc (vla-get-activedocument (vlax-get-acad-object))) ;; Lấy tài liệu hiện tại
   (setq layman (vla-get-layers doc)) ;; Lấy danh sách layer
 
@@ -247,7 +261,7 @@
       (vla-put-layeron lay :vlax-false) ;; Tắt layer
     )
   )
-
+(prompt "\n✅ ĐÃ XỬ LÝ XONG.")
   (princ)
 )
 
@@ -265,6 +279,7 @@
 
 ;        <<<<<<<< Stretch X -SX >>>>>> ;
 (defun c:sx (/ a b keyword hs d1 doituong1 doituong2)
+  (prompt "\n🚀 Đang xử lý...")
   (setq a (getreal "nhap so can set cho a"))
   (setq b (/ a 2))
   (initget 1 "t g") ;tron thoi vuong
@@ -286,6 +301,7 @@
 )
   ;(command "osmode" "16383")
   (setvar "osmode" 16383)
+  (prompt "\n✅ ĐÃ XỬ LÝ XONG.")
 )
 ;;;;;   end of SX   ;;;;;
 
@@ -294,6 +310,7 @@
 
 ;         <<<<<< Stretch Y -SY >>>>>>> ;
 (defun c:SY (/ a b keyword hs d1 doituong1 doituong2)
+  (prompt "\n🚀 Đang xử lý...")
   (setq a (getreal "nhap so can set cho a"))
   (setq b (/ a 2))
   (initget 1 "t g") ;
@@ -320,6 +337,7 @@
 
 ;         <<<<<<<  Ve lo song -VLS >>>>>>
 (defun c:vls(/ dd dt diemtam doituong sosong1 kctam)
+  (prompt "\n🚀 Đang xử lý...")
   ;(command "osmode" "16384")
   (setvar "osmode" 16384)
   (setq dd (getreal "\nnhap chieu dai do"))
@@ -332,13 +350,15 @@
   (command "copy" doituong "" diemtam "_array" sosong1 (list (- (car diemtam) kctam) (cadr diemtam) ) )
   ;(command "osmode" "16383")
   (setvar "osmode" 16383)
+  (prompt "\n✅ ĐÃ XỬ LÝ XONG.")
   (princ)
 )
 ;;;;;;;;;;;; end of VLS ;;;;;;;;
 
 ;       <<<<<<<<<<< VE SONG 3 KIEU -VSS >>>>>>>>> ;
 (defun c:vss (/ dd dk keyword diemtam doituong sls_1 sls_test tam_lo_song kctam sl sosong1 diemdim1 diemdim2 diemdim3 diemdim4 diemdim5 diemdim6 diemdim7 diemdim8 diemtext)
-;(command "osmode" "16383")
+(prompt "\n🚀 Đang xử lý...")
+  ;(command "osmode" "16383")
 (setvar "osmode" 16383)
 (initget 1 "tr th v") ;tron thoi vuong
   (setq keyword (getkword "Ban muon ve song tron <tr>, thoi <th> hay song vuong <v>"))
@@ -402,6 +422,7 @@
   (setvar "osmode" 16383)
   (print "so song la")
   (print sl)
+  (prompt "\n✅ ĐÃ XỬ LÝ XONG.")
   (princ)
 
 )
@@ -490,6 +511,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 )
 
 (defun c:vvd (/ prefix pt counter allText currentDef dxVal dyVal dxStr dyStr lastPt finalPt ptText secondPt)
+  (prompt "\n🚀 Đang xử lý...")
   (setvar "clayer" "_mss.phantom")
   (setvar "osmode" 5)
   ;; 1. Nhập tiền tố (ví dụ: "od_on_ol")
@@ -556,6 +578,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
     )
   )
   (setvar "osmode" 16383)
+  (prompt "\n✅ ĐÃ XỬ LÝ XONG.")
   (princ)
 )
 
