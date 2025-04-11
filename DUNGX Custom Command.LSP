@@ -1,13 +1,22 @@
 ;Lệnh line = 1
-(defun c:1 ()
+(defun c:1 ( / lay )
   (prompt "\n🚀 Đang xử lý...")
   (setvar "osmode" 16383)
-  ;(command "osmode" 16383)
-  (setvar "clayer" "_mss.bao")
-  ;(command "_.LAYER" "_SET" "_mss.bao" "")
+
+  ;; Kiểm tra layer "_mss.bao" có tồn tại
+  (setq lay (tblsearch "layer" "_mss.bao"))
+  (if lay
+    (progn
+      (setvar "clayer" "_mss.bao")
+      (prompt "\n✅ Đã chuyển sang layer _mss.bao.")
+    )
+    (prompt "\n⚠️ Layer _mss.bao không tồn tại, vẫn tiếp tục vẽ.")
+  )
+
   (command "line")
   (princ)
 )
+
 
 
 ;Lệnh move  = 2
@@ -60,11 +69,18 @@
   (command "filter"))
 
 ;lệnh dimlinear -dd
-(defun c:dd ()
+(defun c:dd ( / lay)
   (prompt "\n🚀 Đang xử lý...")
   (setvar "osmode" 16383)
-  ;(command "_.LAYER" "_SET" "_mss.kichthuoc" "")
-  (setvar "clayer" "_mss.kichthuoc")
+  ;; Kiểm tra layer "_mss.bao" có tồn tại
+  (setq lay (tblsearch "layer" "_mss.kichthuoc"))
+  (if lay
+    (progn
+      (setvar "clayer" "_mss.kichthuoc")
+      (prompt "\n✅ Đã chuyển sang layer _mss.kichthuoc.")
+    )
+    (prompt "\n⚠️ Layer _mss.kichthuoc không tồn tại, vẫn tiếp tục vẽ.")
+  )
   (command "dimlinear"))
 
 ;lệnh find-f1
