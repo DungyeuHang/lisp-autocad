@@ -22,7 +22,7 @@
 (defun rotate-list (lst n)
   (append (sublist-from lst n) (take-n lst n)))
 
-(defun c:VE_APOINT_POLY (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext)
+(defun c:VE_APOINT_POLY (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr)
 
   (setq ent (car (entsel "\n🎯 Chọn polyline: ")))
   (if (and ent (= (cdr (assoc 0 (entget ent))) "LWPOLYLINE"))
@@ -36,13 +36,16 @@
         (setq ptList (append ptList (list pt)))
         (setq index (+ index 2)))
 
-      ;; chọn điểm đầu tiên trong danh sách ptList
+      ;; chọn điểm bắt đầu
       (setq startPt (getpoint "\n🧭 Chọn điểm đầu tiên để bắt đầu đánh số: "))
       (setq prefix (getstring T "\n📌 Nhập tiền tố điểm (vd: bl_fr): "))
       (setq count 1)
       (setq allText "")
 
-      ;; tìm chỉ số gần nhất
+      ;; ✅ đảo ptList để đi ngược chiều kim đồng hồ
+      (setq ptList (reverse ptList))
+
+      ;; ✅ tìm chỉ số gần nhất trong danh sách đã đảo
       (setq closestDist 1e99)
       (setq i 0)
       (foreach tmpPt ptList
@@ -52,9 +55,10 @@
             (setq startIndex i)))
         (setq i (1+ i)))
 
-      ;; xoay danh sách bắt đầu từ startIndex
+      ;; ✅ xoay để điểm gần startPt nằm đầu danh sách
       (setq ptList (rotate-list ptList startIndex))
 
+      ;; ✅ vẽ và đánh số từng điểm
       (foreach pt ptList
         (command "CIRCLE" pt "0.3")
 
@@ -67,10 +71,11 @@
                                 " = APoint("
                                 (safeFormatNumber (car pt)) ", "
                                 (safeFormatNumber (cadr pt)) ")"))
-          (setq dx (- (car pt) (car lastPt)))
-          (setq dy (- (cadr pt) (cadr lastPt)))
-                 (dxStr (formatOffset dx))
-                 (dyStr (formatOffset dy)))
+          (progn
+            (setq dx (- (car pt) (car lastPt)))
+            (setq dy (- (cadr pt) (cadr lastPt)))
+            (setq dxStr (formatOffset dx))
+            (setq dyStr (formatOffset dy))
             (setq defLine (strcat prefix "_p" (itoa count)
                                   " = APoint(" prefix "_p" (itoa (1- count)) ".x" dxStr ", "
                                                  prefix "_p" (itoa (1- count)) ".y" dyStr ")"))))
@@ -84,7 +89,7 @@
         (setq lastPt pt)
         (setq count (1+ count)))
 
-      ;; đặt text tổng hợp
+      ;; ✅ chèn tổng hợp định nghĩa nếu có
       (if (> (strlen allText) 0)
         (progn
           (setq finalPt (getpoint "\n📄 Chọn điểm đặt toàn bộ định nghĩa text: "))
