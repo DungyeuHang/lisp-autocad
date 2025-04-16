@@ -620,7 +620,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 (defun rotate-list (lst n)
   (append (sublist-from lst n) (take-n lst n)))
 
-(defun c:APOINT (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr)
+(defun c:VE_APOINT_POLY (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr)
 
   (setq ent (car (entsel "\n🎯 Chọn polyline: ")))
   (if (and ent (= (cdr (assoc 0 (entget ent))) "LWPOLYLINE"))
@@ -640,8 +640,38 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
       (setq count 1)
       (setq allText "")
 
-      ;; ✅ đảo ptList để đi ngược chiều kim đồng hồ
-      (setq ptList (reverse ptList))
+;; 🔍 Tìm điểm gần nhất
+(setq closestDist 1e99)
+(setq i 0)
+(foreach tmpPt ptList
+  (if (< (distance tmpPt startPt) closestDist)
+    (progn
+      (setq closestDist (distance tmpPt startPt))
+      (setq startIndex i)))
+  (setq i (1+ i)))
+
+    ;; 🔁 Tính hướng vector từ điểm gần nhất đến điểm kế tiếp
+    (setq ptA (nth startIndex ptList))
+    (setq ptB (nth (rem (+ startIndex 1) (length ptList)) ptList))
+
+    (setq v1 (mapcar '- ptB ptA))        ; Vector theo danh sách gốc
+    (setq v2 (mapcar '- ptA startPt))    ; Vector từ điểm người dùng chọn
+
+    ;; 🧭 Tính góc giữa 2 vector (dùng tích vô hướng + độ dài)
+    (defun angle-between (v1 v2)
+      (setq dot (apply '+ (mapcar '* v1 v2)))
+      (setq mag1 (distance '(0 0) v1))
+      (setq mag2 (distance '(0 0) v2))
+      (if (and (/= mag1 0) (/= mag2 0))
+        (acos (/ dot (* mag1 mag2)))
+        0.0))
+
+    (setq angle (angle-between v1 v2))
+
+    ;; Nếu góc lớn hơn 90 độ (pi/2) → tức là đang đi lệch hướng → đảo
+    (if (> angle (/ pi 2))
+      (setq ptList (reverse ptList)))
+
 
       ;; ✅ tìm chỉ số gần nhất trong danh sách đã đảo
       (setq closestDist 1e99)
