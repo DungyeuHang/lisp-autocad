@@ -607,6 +607,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 ;;;;;; End VVD ;;;;;;
 
 ;; <<<<<<<<<<<<<<<<<<<          Make Points by Polyline      >>>>>>>>>>>>>>>>>
+
 (defun sublist-from (lst n)
   (if (<= n 0)
     lst
@@ -620,7 +621,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 (defun rotate-list (lst n)
   (append (sublist-from lst n) (take-n lst n)))
 
-(defun c:VE_APOINT_POLY (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr)
+(defun c:APOINT (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr)
 
   (setq ent (car (entsel "\n🎯 Chọn polyline: ")))
   (if (and ent (= (cdr (assoc 0 (entget ent))) "LWPOLYLINE"))
@@ -728,6 +729,8 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
     (prompt "\n❌ Đối tượng không phải Polyline!"))
 
   (princ))
+
+
 
 
 ;; <<<<<<<<<<<<<<<<<<<        End of  Make Points by Polyline      >>>>>>>>>>>>>>>>>
