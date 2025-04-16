@@ -22,7 +22,7 @@
 (defun rotate-list (lst n)
   (append (sublist-from lst n) (take-n lst n)))
 
-(defun c:VE_APOINT_POLY (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr)
+(defun c:APOINT (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr)
 
   (setq ent (car (entsel "\n🎯 Chọn polyline: ")))
   (if (and ent (= (cdr (assoc 0 (entget ent))) "LWPOLYLINE"))
