@@ -1,0 +1,170 @@
+(defun safeFormatNumber (n)
+  (if (equal n (fix n) 1e-6)
+    (itoa (fix n))
+    (rtos n 2 4)))
+
+(defun formatOffset (n)
+  (cond
+    ((equal n 0 1e-6) "")
+    ((> n 0) (strcat " + " (safeFormatNumber n)))
+    ((< n 0) (strcat " - " (safeFormatNumber (- n))))))
+
+(defun sublist-from (lst n)
+  (if (<= n 0)
+    lst
+    (sublist-from (cdr lst) (1- n))))
+
+(defun take-n (lst n)
+  (if (or (null lst) (= n 0))
+    '()
+    (cons (car lst) (take-n (cdr lst) (1- n)))))
+
+(defun rotate-list (lst n)
+  (append (sublist-from lst n) (take-n lst n)))
+
+
+(defun c:VE_APOINT_POLY ( / ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr )
+
+(setq ent (car (entsel "\n🎯 Chọn polyline: ")))
+  (if (and ent (= (cdr (assoc 0 (entget ent))) "LWPOLYLINE"))
+    (progn
+      (setq obj (vlax-ename->vla-object ent))
+      (setq coords (vlax-get obj 'Coordinates))
+      (setq ptList '())
+      (setq index 0)
+      (while (< index (length coords))
+        (setq pt (list (nth index coords) (nth (+ index 1) coords)))
+        (setq ptList (append ptList (list pt)))
+        (setq index (+ index 2)))
+
+      ;; chọn điểm bắt đầu
+      (setq startPt (getpoint "\n🧭 Chọn điểm đầu tiên để bắt đầu đánh số: "))
+      (setq prefix (getstring T "\n📌 Nhập tiền tố điểm (vd: bl_fr): "))
+      (setq count 1)
+      (setq allText "")
+
+      ;; ✅ Phân nhánh theo khép kín hay không
+      (if (= (vla-get-Closed obj) :vlax-true)
+        ;; 🟢 Nếu KHÉP KÍN
+        (progn
+          (prompt "\n✅ Polyline KHÉP KÍN – Đang xử lý ...")
+          ;; 👉 Gọi đoạn code bạn đã viết cho polyline kín
+          ;; 🔍 Tìm điểm gần nhất
+          (setq closestDist 1e99)
+          (setq i 0)
+          (foreach tmpPt ptList
+            (if (< (distance tmpPt startPt) closestDist)
+              (progn
+                (setq closestDist (distance tmpPt startPt))
+                (setq startIndex i)))
+            (setq i (1+ i)))
+
+          ;; 🔁 Tính hướng vector từ điểm gần nhất đến điểm kế tiếp
+          (setq ptA (nth startIndex ptList))
+          (setq ptB (nth (rem (+ startIndex 1) (length ptList)) ptList))
+
+          (setq v1 (mapcar '- ptB ptA))        ; Vector theo danh sách gốc
+          (setq v2 (mapcar '- ptA startPt))    ; Vector từ điểm người dùng chọn
+
+          ;; 🧭 Tính góc giữa 2 vector (dùng tích vô hướng + độ dài)
+          (defun angle-between (v1 v2)
+            (setq dot (apply '+ (mapcar '* v1 v2)))
+            (setq mag1 (distance '(0 0) v1))
+            (setq mag2 (distance '(0 0) v2))
+            (if (and (/= mag1 0) (/= mag2 0))
+              (acos (/ dot (* mag1 mag2)))
+              0.0))
+
+          (setq angle (angle-between v1 v2))
+
+    ;; Nếu góc lớn hơn 90 độ (pi/2) → tức là đang đi lệch hướng → đảo
+    (if (> angle (/ pi 2))
+      (setq ptList (reverse ptList)))
+
+
+      ;; ✅ tìm chỉ số gần nhất trong danh sách đã đảo
+      (setq closestDist 1e99)
+      (setq i 0)
+      (foreach tmpPt ptList
+        (if (< (distance tmpPt startPt) closestDist)
+          (progn
+            (setq closestDist (distance tmpPt startPt))
+            (setq startIndex i)))
+        (setq i (1+ i)))
+
+      ;; ✅ xoay để điểm gần startPt nằm đầu danh sách
+      (setq ptList (rotate-list ptList startIndex))
+
+      ;; ✅ vẽ và đánh số từng điểm
+      (foreach pt ptList
+        (command "CIRCLE" pt "0.3")
+
+        (setq ptText (if (= (rem count 2) 1)
+                       (list (car pt) (+ (cadr pt) 0.1))
+                       (list (car pt) (- (cadr pt) 0.1))))
+
+        (if (= count 1)
+          (setq defLine (strcat prefix "_p" (itoa count)
+                                " = APoint("
+                                (safeFormatNumber (car pt)) ", "
+                                (safeFormatNumber (cadr pt)) ")"))
+          (progn
+            (setq dx (- (car pt) (car lastPt)))
+            (setq dy (- (cadr pt) (cadr lastPt)))
+            (setq dxStr (formatOffset dx))
+            (setq dyStr (formatOffset dy))
+            (setq defLine (strcat prefix "_p" (itoa count)
+                                  " = APoint(" prefix "_p" (itoa (1- count)) ".x" dxStr ", "
+                                                 prefix "_p" (itoa (1- count)) ".y" dyStr ")"))))
+
+        (setq ptNext (if (= (rem count 2) 1)
+                       (list (+ (car ptText) 10) (+ (cadr ptText) 0.1))
+                       (list (+ (car ptText) 10) (- (cadr ptText) 0.1))))
+        (command "MTEXT" ptText ptNext defLine "")
+
+        (setq allText (strcat allText defLine "\n"))
+        (setq lastPt pt)
+        (setq count (1+ count)))
+
+      ;; ✅ chèn tổng hợp định nghĩa nếu có
+      (if (> (strlen allText) 0)
+        (progn
+          (setq finalPt (getpoint "\n📄 Chọn điểm đặt toàn bộ định nghĩa text: "))
+          (setq finalNext (list (+ (car finalPt) 10) (+ (cadr finalPt) 1)))
+          (command "MTEXT" finalPt finalNext allText "")))
+      (prompt "\n✅ Đã tạo xong danh sách APoint.")
+        )
+        ;; 🔴 Nếu KHÔNG KHÉP KÍN
+        
+      )
+    )
+    (prompt "\n⛔ Bạn chưa chọn đúng đối tượng LWPOLYLINE!")
+  )
+
+  (princ)
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
