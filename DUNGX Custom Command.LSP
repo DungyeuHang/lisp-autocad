@@ -632,7 +632,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   (append (sublist-from lst n) (take-n lst n)))
 
 (defun c:APOINT (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr)
-
+  (setvar "clayer" "_mss.phantom")
   (setq ent (car (entsel "\n🎯 Chọn polyline: ")))
   (if (and ent (= (cdr (assoc 0 (entget ent))) "LWPOLYLINE"))
     (progn
