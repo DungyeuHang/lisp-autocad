@@ -822,12 +822,6 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
 
 
-
-
-
-
-
-
 ;;;;; START of VIEWS ;;;;;;
 
 (defun c:v2v()
@@ -843,3 +837,68 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 )
 ;;;;; END of VIEWS ;;;;;;
 
+
+
+;;;;;;;;;;;;;;;;;;; Start of JoinDimAuto ;;;;;;;;;;;;;;;;;;;;;;
+(defun c:JoinDimAuto ()
+  (prompt "\n>> Chọn các DIM muốn gộp (tối thiểu 2): ")
+  (setq ss (ssget '((0 . "DIMENSION"))))
+  (if (and ss (>= (sslength ss) 2))
+    (progn
+      (setq allpts '()
+            firstEnt (entget (ssname ss 0))
+            firstP1 (cdr (assoc 13 firstEnt))
+            firstP2 (cdr (assoc 14 firstEnt))
+            firstTextPos (cdr (assoc 11 firstEnt))) ; vị trí chữ của dim đầu
+
+      ;; Xác định hướng: ngang hay dọc
+      (if (> (abs (- (car firstP1) (car firstP2))) (abs (- (cadr firstP1) (cadr firstP2))))
+        (setq isHorizontal T)
+        (setq isHorizontal nil))
+
+      ;; Tính khoảng offset vuông góc từ đoạn dim đến chữ (dùng khoảng cách vuông góc)
+      (if isHorizontal
+        (setq offset (- (cadr firstTextPos) (cadr firstP1))) ; theo trục Y
+        (setq offset (- (car firstTextPos) (car firstP1)))) ; theo trục X
+
+      ;; Gom tất cả điểm
+      (repeat (sslength ss)
+        (setq ent (entget (ssname ss 0)))
+        (setq ss (ssdel (ssname ss 0) ss))
+
+        (setq p1 (cdr (assoc 13 ent)))
+        (setq p2 (cdr (assoc 14 ent)))
+        (setq allpts (append allpts (list p1 p2)))
+
+        (entdel (cdr (assoc -1 ent))) ; xóa DIM cũ
+      )
+
+      ;; Tìm điểm min/max theo hướng chính
+      (if isHorizontal
+        (progn
+          (setq sorted (vl-sort allpts (function (lambda (a b) (< (car a) (car b))))))
+          (setq ptStart (car sorted))
+          (setq ptEnd (car (reverse sorted)))
+          ;; tính điểm dim theo trục Y
+          (setq dimPt (list (car ptStart) (+ (cadr ptStart) offset) 0.0))
+        )
+        (progn
+          (setq sorted (vl-sort allpts (function (lambda (a b) (< (cadr a) (cadr b))))))
+          (setq ptStart (car sorted))
+          (setq ptEnd (car (reverse sorted)))
+          ;; tính điểm dim theo trục X
+          (setq dimPt (list (+ (car ptStart) offset) (cadr ptStart) 0.0))
+        )
+      )
+
+      ;; Vẽ dim mới
+      (command "_.DIMLINEAR" "_non" ptStart "_non" ptEnd "_non" dimPt "")
+
+      (princ "\n✅ Đã gộp DIM và đặt đúng vị trí.")
+    )
+    (prompt "\n⚠️ Phải chọn ít nhất 2 DIMENSION.")
+  )
+  (princ)
+)
+
+;;;;;;;;;;;;;;;;;;; End of JoinDimAuto ;;;;;;;;;;;;;;;;;;;;;;
