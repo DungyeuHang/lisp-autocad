@@ -737,7 +737,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
         (list
           (cons 0 "TEXT")
           (cons 10 textInsertPt)
-          (cons 40 1.0)
+          (cons 40 0.1)
           (cons 1 smartShapeStr)
         )
       )
