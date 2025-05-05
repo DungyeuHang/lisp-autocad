@@ -694,7 +694,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
       ;; ========================
       ;; ✅ Thêm Smart Shape Text
       ;; ========================
-      (setq textInsertPt (getpoint "\n📌 Chọn điểm để gán text create_smart_shape: "))
+      (setq textInsertPt (list (car finalPt) (- (cadr finalPt) 1)))
       (setq arcInfoStr "")
       (setq count 0)
       (while (< count (- (length ptList) 1))
