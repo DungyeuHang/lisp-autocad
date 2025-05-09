@@ -902,3 +902,70 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 )
 
 ;;;;;;;;;;;;;;;;;;; End of JoinDimAuto ;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+;;;;;;;;;;;;;;;;;;; Start of chia Dim ;;;;;;;;;;;;;;;;;;;;;;
+
+(defun c:CDD-CHIADIM (/ ent entData pt1 pt2 ptDim ptList tmpPt i pA pB midPt dirVec)
+
+  (vl-load-com)
+
+  ;; Hàm vector đơn vị
+  (defun getDirVec (p1 p2)
+    (setq v (mapcar '- p2 p1))
+    (setq len (distance p1 p2))
+    (if (/= len 0)
+      (mapcar '(lambda (x) (/ x len)) v)
+      '(1 0)
+    )
+  )
+
+  ;; Làm phẳng Z
+  (defun flatten (pt) (list (car pt) (cadr pt) 0.0))
+
+  ;; Bắt đầu
+  (prompt "\nChọn đối tượng DIM cần chia: ")
+  (setq ent (car (entsel)))
+  (if (and ent (= (cdr (assoc 0 (entget ent))) "DIMENSION"))
+    (progn
+      ;; Lấy dữ liệu
+      (setq entData (entget ent))
+      (setq pt1 (flatten (cdr (assoc 13 entData))))
+      (setq pt2 (flatten (cdr (assoc 14 entData))))
+      (setq ptDim (flatten (cdr (assoc 10 entData))))
+      (setq dirVec (getDirVec pt1 pt2))
+
+      ;; Chọn điểm chia
+      (prompt "\nChọn các điểm chia (Enter để kết thúc): ")
+      (setq ptList nil)
+      (while (setq tmpPt (getpoint "\nChọn điểm chia: "))
+        (setq ptList (append ptList (list (flatten tmpPt))))
+      )
+
+      ;; Thêm đầu/cuối và sắp xếp
+      (setq ptList (append (list pt1) ptList (list pt2)))
+      (setq ptList (vl-sort ptList '(lambda (a b) (< (distance pt1 a) (distance pt1 b)))))
+
+      ;; Xoá DIM cũ
+      (entdel ent)
+
+      ;; Dựng lại DIM
+      (setq i 0)
+      (while (< i (1- (length ptList)))
+        (setq pA (nth i ptList))
+        (setq pB (nth (1+ i) ptList))
+        (if (> (abs (- (car pA) (car pB))) (abs (- (cadr pA) (cadr pB))))
+          (command "_.DIMHORIZONTAL" "_non" pA "_non" pB "_non" ptDim)
+          (command "_.DIMVERTICAL" "_non" pA "_non" pB "_non" ptDim)
+        )
+        (setq i (1+ i))
+      )
+    )
+    (prompt "\nKhông phải đối tượng DIM hợp lệ.")
+  )
+  (princ)
+)
+
+;;;;;;;;;;;;;;;;;;; End of chia Dim ;;;;;;;;;;;;;;;;;;;;;;
