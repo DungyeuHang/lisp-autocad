@@ -359,7 +359,21 @@
   (prompt "\n🚀 Đang xử lý...")
   ;(command "osmode" "16384")
   (setvar "osmode" 16384)
-  (setq dd (getreal "\nnhap chieu dai do"))
+  ;(setq dd (getreal "\nnhap chieu dai do"))
+  (while (not dd) ; lặp đến khi có giá trị chiều dài
+    (setq ent (car (entsel "\nChon doi tuong DIM: ")))
+    (if ent
+      (if (= (cdr (assoc 0 (entget ent))) "DIMENSION")
+        (progn
+          (setq dd (vla-get-Measurement (vlax-ename->vla-object ent)))
+          (princ (strcat "\nDo dai DIM: " (rtos dd 2 2)))
+        )
+        (prompt "\n❌ Khong phai DIM. Vui long chon lai.")
+      )
+      (prompt "\n⚠️ Khong chon gi ca. Vui long chon lai.")
+    )
+  )
+  
   (setq dt (+ (/ dd 2) 70)) ;chieu dai tinh
   (setq diemtam (list 0 0))
   (setq doituong (ssget))
@@ -389,7 +403,20 @@
     ((= keyword "v") ;vuong  = 15.5
      (setq dk 15.5 )) ; ket thuc dk3
      ) ;ket thuc cond
-  (setq dd (getreal "\nnhap chieu dai do"))
+  ;(setq dd (getreal "\nnhap chieu dai do"))
+  (while (not dd) ; lặp đến khi có giá trị chiều dài
+    (setq ent (car (entsel "\nChon doi tuong DIM: ")))
+    (if ent
+      (if (= (cdr (assoc 0 (entget ent))) "DIMENSION")
+        (progn
+          (setq dd (vla-get-Measurement (vlax-ename->vla-object ent)))
+          (princ (strcat "\nDo dai DIM: " (rtos dd 2 2)))
+        )
+        (prompt "\n❌ Khong phai DIM. Vui long chon lai.")
+      )
+      (prompt "\n⚠️ Khong chon gi ca. Vui long chon lai.")
+    )
+  )
   
   ;(setq dt (+ (/ dd 2) dk)) ;chieu dai tinh
   (setq diemtam (getpoint "chon diem tam"))
