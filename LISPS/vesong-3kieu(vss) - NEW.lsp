@@ -26,8 +26,33 @@
   )
   
   ;(setq dt (+ (/ dd 2) dk)) ;chieu dai tinh
-  (setq diemtam (getpoint "chon diem tam"))
+
   (setq doituong (ssget))
+  ;(setq diemtam (getpoint "chon diem tam"))
+  (if (and doituong (= (sslength doituong) 1))
+    (progn
+      (setq ename (ssname doituong 0))
+      (setq ent (entget ename))
+      (setq type (cdr (assoc 0 ent))) ; lấy loại đối tượng
+      (cond
+        ((= type "CIRCLE")
+         (setq diemtam (cdr (assoc 10 ent)))
+        )
+        ((= type "INSERT") ; BLOCK
+         (setq diemtam (cdr (assoc 10 ent))) ; điểm chèn block
+        )
+        ((= type "LWPOLYLINE")
+         (setq bbox (vla-getboundingbox (vlax-ename->vla-object ename) 'minPt 'maxPt))
+         (setq minPt (vlax-safearray->list minPt))
+         (setq maxPt (vlax-safearray->list maxPt))
+         (setq diemtam (mapcar '(lambda (a b) (/ (+ a b) 2.0)) minPt maxPt)) ; tâm hình chữ nhật bao
+        )
+        (T (prompt "\nLoại đối tượng không được hỗ trợ."))
+      )
+      (princ (strcat "\nTâm của đối tượng là: " (rtos (car diemtam) 2 3) ", " (rtos (cadr diemtam) 2 3)))
+    )
+    (prompt "\nVui lòng chọn đúng 1 đối tượng.")
+  )
   ;(setq sosong1 (+ (fix (/ dt 155 ) ) 1) )
   ;(setq kctam (/ dt sosong1))
   ;(setq sl  (- (* sosong1 2) 1))
