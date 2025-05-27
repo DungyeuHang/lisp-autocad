@@ -135,11 +135,11 @@
 
 
 ;;;;;;;;;;;;;;;;;;             < Dungx insert -dungx >            ;;;;;;;;;;;;;;
-(defun c:dungx (/ pt time date-string year month day formatted-date new-pt new-pt1 i)
+(defun c:dungx (/ pt time date-string year month day formatted-date new-pt new-pt1 iii)
   ;(command "_.LAYER" "_SET" "_mss.phantom" "")
   (prompt "\n🚀 Đang xử lý...")
   (setvar "clayer" "_mss.phantom")
-  (setq i 1) ;; Bắt đầu đếm từ 1
+  (setq iii 1) ;; Bắt đầu đếm từ 1
   ;(command "osmode" "16384")
   (setvar "osmode" 16384)
 
@@ -177,11 +177,11 @@
     (setq new-pt1 (list (-(car pt) 100) (+ (cadr pt) -250)))
 
     ;; Hiển thị chuỗi văn bản
-    (command "text" new-pt 55 "0" formatted-date)
-    (command "text" new-pt1 55 "0" (strcat "NO." (itoa i))) ;; Đếm số thứ tự và chuyển thành chuỗi
+    (command "text" new-pt "0" formatted-date)
+    (command "text" new-pt1  "0" (strcat "NO." (itoa iii))) ;; Đếm số thứ tự và chuyển thành chuỗi
     (prompt "\n🚀 Đã xử lý...")
     ;; Tăng giá trị đếm
-    (setq i (1+ i))
+    (setq iii (1+ iii))
   )
 
   ;; Khi thoát vòng lặp, chạy các lệnh cuối
