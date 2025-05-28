@@ -389,7 +389,7 @@
 ;;;;;;;;;;;; end of VLS ;;;;;;;;
 
 ;       <<<<<<<<<<< VE SONG 3 KIEU -VSS >>>>>>>>> ;
-(defun c:vss (/ i ent1 dd dk keyword diemtam doituong sls_1 sls_test tam_lo_song kctam sl sosong1 diemdim1 diemdim2 diemdim3 diemdim4 diemdim5 diemdim6 diemdim7 diemdim8 diemtext ename ent doituong1 bbox minPt maxPt diemtam themObj)
+(defun c:vss (/ iiii ent1 dd dk keyword diemtam doituong sls_1 sls_test tam_lo_song kctam sl sosong1 diemdim1 diemdim2 diemdim3 diemdim4 diemdim5 diemdim6 diemdim7 diemdim8 diemtext ename ent doituong1 bbox minPt maxPt diemtam themObj)
 (command "osmode" "16383")
 (initget 1 "tr th v") ;tron thoi vuong
   (setq keyword (getkword "Ban muon ve song tron <tr>, thoi <th> hay song vuong <v>"))
@@ -460,7 +460,7 @@
               ;; Tạo selection set mới chứa cả doituong1 và themObj
               (setq doituong (ssadd (ssname doituong1 0)))
               (repeat (sslength themObj)
-                (setq doituong (ssadd (ssname themObj (setq i (if i (1+ i) 0))) doituong))
+                (setq doituong (ssadd (ssname themObj (setq iiii (if iiii (1+ iiii) 0))) doituong))
               )
             )
             (T
@@ -706,7 +706,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 (defun rotate-list (lst n)
   (append (sublist-from lst n) (take-n lst n)))
 
-(defun c:APOINT (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr)
+(defun c:APOINT (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist tmpPt finalPt finalNext dx dy dxStr dyStr)
   (setvar "clayer" "_mss.phantom")
   (setq ent (car (entsel "\n🎯 Chọn polyline: ")))
   (if (and ent (= (cdr (assoc 0 (entget ent))) "LWPOLYLINE"))
@@ -840,7 +840,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   (append (nthcdr n lst) (reverse (reverse (take lst n)))))
 
 ;Đổi điểm đầu polyline
-(defun c:RTPL (/ ent obj coords ptList index pt startPt closestDist i newCoords startIndex bulges)
+(defun c:RTPL (/ ent obj coords ptList index pt startPt closestDist i1 newCoords startIndex bulges)
 
   (setq ent (car (entsel "\n🎯 Chọn polyline cần đổi điểm đầu: ")))
   (if (and ent (= (cdr (assoc 0 (entget ent))) "LWPOLYLINE"))
@@ -857,23 +857,23 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
       ;; 🔁 Lấy bulge gốc trước khi sửa
       (setq bulges '())
-      (setq i 0)
+      (setq i1 0)
       (repeat (/ (length coords) 2)
-        (setq bulges (append bulges (list (vla-GetBulge obj i))))
-        (setq i (1+ i)))
+        (setq bulges (append bulges (list (vla-GetBulge obj i1))))
+        (setq i1 (1+ i1)))
 
       ;; Chọn điểm tham chiếu
       (setq startPt (getpoint "\n📌 Chọn điểm muốn đặt làm điểm đầu: "))
 
       ;; Tìm chỉ số điểm gần nhất
       (setq closestDist 1e99)
-      (setq i 0)
+      (setq i1 0)
       (foreach tmpPt ptList
         (if (< (distance tmpPt startPt) closestDist)
           (progn
             (setq closestDist (distance tmpPt startPt))
-            (setq startIndex i)))
-        (setq i (1+ i)))
+            (setq startIndex i1)))
+        (setq i1 (1+ i1)))
 
       ;; Xoay danh sách điểm và bulge theo điểm đầu mới
       (setq ptList (rotate-list ptList startIndex))
@@ -883,10 +883,10 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
       (setq newCoords (apply 'append ptList))
       (vlax-put obj 'Coordinates newCoords)
 
-      (setq i 0)
+      (setq i1 0)
       (foreach b bulges
-        (vla-SetBulge obj i b)
-        (setq i (1+ i)))
+        (vla-SetBulge obj i1 b)
+        (setq i1 (1+ i1)))
 
       (prompt "\n✅ Đã đổi điểm đầu polyline và giữ nguyên cung."))
     (prompt "\n❌ Không phải là LWPOLYLINE!"))
@@ -983,7 +983,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
 ;;;;;;;;;;;;;;;;;;; Start of chia Dim ;;;;;;;;;;;;;;;;;;;;;;
 
-(defun c:CDD-CHIADIM (/ ent entData pt1 pt2 ptDim ptList tmpPt i pA pB midPt dirVec)
+(defun c:CDD-CHIADIM (/ ent entData pt1 pt2 ptDim ptList tmpPt ii pA pB midPt dirVec)
 
   (vl-load-com)
 
@@ -1027,15 +1027,15 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
       (entdel ent)
 
       ;; Dựng lại DIM
-      (setq i 0)
-      (while (< i (1- (length ptList)))
-        (setq pA (nth i ptList))
-        (setq pB (nth (1+ i) ptList))
+      (setq ii 0)
+      (while (< ii (1- (length ptList)))
+        (setq pA (nth ii ptList))
+        (setq pB (nth (1+ ii) ptList))
         (if (> (abs (- (car pA) (car pB))) (abs (- (cadr pA) (cadr pB))))
           (command "_.DIMHORIZONTAL" "_non" pA "_non" pB "_non" ptDim)
           (command "_.DIMVERTICAL" "_non" pA "_non" pB "_non" ptDim)
         )
-        (setq i (1+ i))
+        (setq ii (1+ ii))
       )
     )
     (prompt "\nKhông phải đối tượng DIM hợp lệ.")
