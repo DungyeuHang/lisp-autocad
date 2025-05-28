@@ -135,63 +135,62 @@
 
 
 ;;;;;;;;;;;;;;;;;;             < Dungx insert -dungx >            ;;;;;;;;;;;;;;
+(defun create-text (pt txt hgt lay / doc mspace txtobj)
+  (setq doc (vla-get-activedocument (vlax-get-acad-object)))
+  (setq mspace (vla-get-modelspace doc))
+  (setq txtobj (vla-addtext mspace txt (vlax-3d-point pt) hgt))
+  (vla-put-layer txtobj lay)
+  txtobj
+)
+
 (defun c:dungx (/ pt time date-string year month day formatted-date new-pt new-pt1 iii)
-  ;(command "_.LAYER" "_SET" "_mss.phantom" "")
   (prompt "\n🚀 Đang xử lý...")
   (setvar "clayer" "_mss.phantom")
-  (setq iii 1) ;; Bắt đầu đếm từ 1
-  ;(command "osmode" "16384")
+  (setq iii 1)
   (setvar "osmode" 16384)
 
-  ;; Vòng lặp vô hạn, chỉ dừng khi người dùng nhấn Enter hoặc Space
   (while (setq pt (getpoint "\n💬 Chọn điểm chèn (Nhấn Enter để thoát): "))
-    
-    ;; Kiểm tra nếu block "SIGNATURE" không tồn tại
+
+    ;; Kiểm tra block SIGNATURE có tồn tại
     (if (not (tblsearch "block" "SIGNATURE"))
       (progn
-        (princ "\nBlock SIGNATURE không tồn tại. Hãy kiểm tra lại.")
+        (princ "\n⚠️ Block SIGNATURE không tồn tại. Hãy kiểm tra lại.")
         (exit)
       )
     )
-    
-    ;; Chèn block SIGNATURE tại điểm chèn
-    (command "insert" "SIGNATURE" pt "" "")
 
-    ;; Lấy giá trị thời gian từ AutoCAD
+    ;; Chèn block SIGNATURE
+    (command "_.-insert" "SIGNATURE" pt "" "")
+
+    ;; Lấy ngày giờ hệ thống
     (setq time (getvar "Cdate"))
-
-    ;; Xử lý chuỗi ngày tháng từ giá trị thời gian
-    (setq date-string (rtos time 2 6)) ;; Chuyển về chuỗi có 6 số lẻ
-    (setq date-string (substr date-string 1 8)) ;; Lấy 8 ký tự đầu tiên
-
-    ;; Tách năm, tháng, ngày
-    (setq year (substr date-string 1 4))     ;; Năm: yyyy
-    (setq month (substr date-string 5 2))    ;; Tháng: MM
-    (setq day (substr date-string 7 2))      ;; Ngày: dd
-
-    ;; Tạo chuỗi văn bản theo định dạng Ngày: DD/MM/YYYY
+    (setq date-string (rtos time 2 6))
+    (setq date-string (substr date-string 1 8))
+    (setq year (substr date-string 1 4))
+    (setq month (substr date-string 5 2))
+    (setq day (substr date-string 7 2))
     (setq formatted-date (strcat day "/" month "/" year))
 
-    ;; Tạo điểm mới để hiển thị ngày và số thứ tự
-    (setq new-pt (list (-(car pt) 200) (+ (cadr pt) -150)))
-    (setq new-pt1 (list (-(car pt) 100) (+ (cadr pt) -250)))
+    ;; Tính điểm chèn text
+    (setq new-pt (list (-(car pt) 200) (+ (cadr pt) -150) 0))
+    (setq new-pt1 (list (-(car pt) 100) (+ (cadr pt) -250) 0))
 
-    ;; Hiển thị chuỗi văn bản
-    (command "text" new-pt "0" formatted-date)
-    (command "text" new-pt1  "0" (strcat "NO." (itoa iii))) ;; Đếm số thứ tự và chuyển thành chuỗi
-    (prompt "\n🚀 Đã xử lý...")
-    ;; Tăng giá trị đếm
+    ;; Tạo text bằng VLA
+    (create-text new-pt formatted-date 55 "_mss.phantom")
+    (create-text new-pt1 (strcat "NO." (itoa iii)) 55 "_mss.phantom")
+
+    (prompt "\n✅ Đã chèn block và text...")
+
+    ;; Tăng số thứ tự
     (setq iii (1+ iii))
   )
 
-  ;; Khi thoát vòng lặp, chạy các lệnh cuối
-  ;(command "osmode" "16383")
   (setvar "osmode" 16383)
-  ;(command "_.LAYER" "_SET" "_mss.kichthuoc" "")
   (setvar "clayer" "_mss.kichthuoc")
-  (prompt "\n✅ ĐÃ XỬ LÝ XONG.")
+  (prompt "\n🏁 ĐÃ XỬ LÝ XONG.")
   (princ)
 )
+
 
 
 ;;;;;;;;;;;;;;;;;;;;  end of DUNGX  ;;;;;;;;;;;;;
