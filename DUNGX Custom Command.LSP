@@ -423,17 +423,17 @@
     (progn
       (setq ename (ssname doituong1 0))
       (setq ent (entget ename))
-      (setq type (cdr (assoc 0 ent))) ; lấy loại đối tượng
+      (setq type1 (cdr (assoc 0 ent))) ; lấy loại đối tượng
 
       ;; Xác định tọa độ tâm dựa theo loại đối tượng
       (cond
-        ((= type "CIRCLE")
+        ((= type1 "CIRCLE")
          (setq diemtam (cdr (assoc 10 ent)))
         )
-        ((= type "INSERT") ; BLOCK
+        ((= type1 "INSERT") ; BLOCK
          (setq diemtam (cdr (assoc 10 ent))) ; điểm chèn block
         )
-        ((= type "LWPOLYLINE")
+        ((= type1 "LWPOLYLINE")
          (setq bbox (vla-getboundingbox (vlax-ename->vla-object ename) 'minPt 'maxPt))
          (setq minPt (vlax-safearray->list minPt))
          (setq maxPt (vlax-safearray->list maxPt))
