@@ -720,7 +720,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
         (setq index (+ index 2)))
 
       ;; chọn điểm bắt đầu
-      (setq startPt (getpoint "\n🧭 Chọn điểm đầu tiên để bắt đầu đánh số: "))
+      ;(setq startPt (getpoint "\n🧭 Chọn điểm đầu tiên để bắt đầu đánh số: "))
       (setq prefix (getstring T "\n📌 Nhập tiền tố điểm (vd: bl_fr): "))
       (setq count 1)
       (setq allText "")
