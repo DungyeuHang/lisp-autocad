@@ -778,7 +778,9 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
         (if (> (abs bulge) 1e-6)
           (progn
             (setq chord (distance (list (car p1) (cadr p1)) (list (car p2) (cadr p2))))
-            (setq radius (/ chord (* 4 bulge))) ; công thức R = chord / (4 * bulge)
+            (setq theta (* 4 (atan bulge))) ; góc ở tâm (radian)
+            (setq radius (/ chord (* 2 (sin (/ theta 2))))) ; bán kính R = chord / (2 * sin(theta/2))
+            ; công thức R = chord / (4 * bulge)
             (setq arcInfoStr
               (strcat arcInfoStr
                 (strcat "(" (itoa (1+ count)) "," (itoa (+ 2 count)) "): (" (rtos radius 2 2) ", True),\n")

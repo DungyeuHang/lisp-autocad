@@ -24,7 +24,7 @@
 (defun rotate-list (lst n)
   (append (sublist-from lst n) (take-n lst n)))
 
-(defun c:APOINT (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist tmpPt finalPt finalNext dx dy dxStr dyStr)
+(defun c:APOINT2 (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist tmpPt finalPt finalNext dx dy dxStr dyStr)
   (setvar "clayer" "_mss.phantom")
   (setq ent (car (entsel "\n🎯 Chọn polyline: ")))
   (if (and ent (= (cdr (assoc 0 (entget ent))) "LWPOLYLINE"))
@@ -97,7 +97,9 @@
         (if (> (abs bulge) 1e-6)
           (progn
             (setq chord (distance (list (car p1) (cadr p1)) (list (car p2) (cadr p2))))
-            (setq radius (/ chord (* 4 bulge))) ; công thức R = chord / (4 * bulge)
+            (setq theta (* 4 (atan bulge))) ; góc ở tâm (radian)
+            (setq radius (/ chord (* 2 (sin (/ theta 2))))) ; bán kính R = chord / (2 * sin(theta/2))
+            ; công thức R = chord / (4 * bulge)
             (setq arcInfoStr
               (strcat arcInfoStr
                 (strcat "(" (itoa (1+ count)) "," (itoa (+ 2 count)) "): (" (rtos radius 2 2) ", True),\n")
