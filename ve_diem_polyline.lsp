@@ -1,3 +1,5 @@
+
+;; <<<<<<<<<<<<<<<<<<<          Make Points by Polyline      >>>>>>>>>>>>>>>>>
 (defun safeFormatNumber (n)
   (if (equal n (fix n) 1e-6)
     (itoa (fix n))
@@ -22,8 +24,8 @@
 (defun rotate-list (lst n)
   (append (sublist-from lst n) (take-n lst n)))
 
-(defun c:VE_APOINT_POLY (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist i tmpPt finalPt finalNext dx dy dxStr dyStr)
-
+(defun c:APOINT (/ ent obj coords index ptList prefix count pt lastPt defLine allText ptText ptNext startPt startIndex closestDist tmpPt finalPt finalNext dx dy dxStr dyStr)
+  (setvar "clayer" "_mss.phantom")
   (setq ent (car (entsel "\n🎯 Chọn polyline: ")))
   (if (and ent (= (cdr (assoc 0 (entget ent))) "LWPOLYLINE"))
     (progn
@@ -37,56 +39,11 @@
         (setq index (+ index 2)))
 
       ;; chọn điểm bắt đầu
-      (setq startPt (getpoint "\n🧭 Chọn điểm đầu tiên để bắt đầu đánh số: "))
+      ;(setq startPt (getpoint "\n🧭 Chọn điểm đầu tiên để bắt đầu đánh số: "))
       (setq prefix (getstring T "\n📌 Nhập tiền tố điểm (vd: bl_fr): "))
       (setq count 1)
       (setq allText "")
 
-;; 🔍 Tìm điểm gần nhất
-(setq closestDist 1e99)
-(setq i 0)
-(foreach tmpPt ptList
-  (if (< (distance tmpPt startPt) closestDist)
-    (progn
-      (setq closestDist (distance tmpPt startPt))
-      (setq startIndex i)))
-  (setq i (1+ i)))
-
-    ;; 🔁 Tính hướng vector từ điểm gần nhất đến điểm kế tiếp
-    (setq ptA (nth startIndex ptList))
-    (setq ptB (nth (rem (+ startIndex 1) (length ptList)) ptList))
-
-    (setq v1 (mapcar '- ptB ptA))        ; Vector theo danh sách gốc
-    (setq v2 (mapcar '- ptA startPt))    ; Vector từ điểm người dùng chọn
-
-    ;; 🧭 Tính góc giữa 2 vector (dùng tích vô hướng + độ dài)
-    (defun angle-between (v1 v2)
-      (setq dot (apply '+ (mapcar '* v1 v2)))
-      (setq mag1 (distance '(0 0) v1))
-      (setq mag2 (distance '(0 0) v2))
-      (if (and (/= mag1 0) (/= mag2 0))
-        (acos (/ dot (* mag1 mag2)))
-        0.0))
-
-    (setq angle (angle-between v1 v2))
-
-    ;; Nếu góc lớn hơn 90 độ (pi/2) → tức là đang đi lệch hướng → đảo
-    (if (> angle (/ pi 2))
-      (setq ptList (reverse ptList)))
-
-
-      ;; ✅ tìm chỉ số gần nhất trong danh sách đã đảo
-      (setq closestDist 1e99)
-      (setq i 0)
-      (foreach tmpPt ptList
-        (if (< (distance tmpPt startPt) closestDist)
-          (progn
-            (setq closestDist (distance tmpPt startPt))
-            (setq startIndex i)))
-        (setq i (1+ i)))
-
-      ;; ✅ xoay để điểm gần startPt nằm đầu danh sách
-      (setq ptList (rotate-list ptList startIndex))
 
       ;; ✅ vẽ và đánh số từng điểm
       (foreach pt ptList
@@ -125,7 +82,59 @@
           (setq finalPt (getpoint "\n📄 Chọn điểm đặt toàn bộ định nghĩa text: "))
           (setq finalNext (list (+ (car finalPt) 10) (+ (cadr finalPt) 1)))
           (command "MTEXT" finalPt finalNext allText "")))
-      (prompt "\n✅ Đã tạo xong danh sách APoint."))
+      (prompt "\n✅ Đã tạo xong danh sách APoint.")
+
+      ;; ========================
+      ;; ✅ Thêm Smart Shape Text
+      ;; ========================
+      (setq textInsertPt (list (car finalPt) (- (cadr finalPt) 1)))
+      (setq arcInfoStr "")
+      (setq count 0)
+      (while (< count (- (length ptList) 1))
+        (setq p1 (nth count ptList))
+        (setq p2 (nth (1+ count) ptList))
+        (setq bulge (vla-GetBulge obj count))
+        (if (> (abs bulge) 1e-6)
+          (progn
+            (setq chord (distance (list (car p1) (cadr p1)) (list (car p2) (cadr p2))))
+            (setq radius (/ chord (* 4 bulge))) ; công thức R = chord / (4 * bulge)
+            (setq arcInfoStr
+              (strcat arcInfoStr
+                (strcat "(" (itoa (1+ count)) "," (itoa (+ 2 count)) "): (" (rtos radius 2 2) ", True),\n")
+              )
+            )
+          )
+        )
+        (setq count (1+ count))
+      )
+
+
+      (if (= (vla-get-Closed obj) :vlax-true)
+        (setq closeStr "True")
+        (setq closeStr "False")
+      )
+
+      (setq smartShapeStr
+        (strcat "create_smart_shape(\""
+                prefix "_p\", 1, "
+                (itoa (length ptList))
+                ", arcs_info={\n"
+                arcInfoStr
+                "},close ="
+                closeStr
+                ")")
+      )
+
+      ;; Chèn đoạn text vào bản vẽ
+      (entmakex
+        (list
+          (cons 0 "TEXT")
+          (cons 10 textInsertPt)
+          (cons 40 0.1)
+          (cons 1 smartShapeStr)
+        )
+      )
+)
 
     (prompt "\n❌ Đối tượng không phải Polyline!"))
 
