@@ -72,15 +72,6 @@
 (defun c:dd ( / lay)
   (prompt "\n🚀 Đang xử lý...")
   (setvar "osmode" 16383)
-  ;; Kiểm tra layer "_mss.bao" có tồn tại
-  (setq lay (tblsearch "layer" "_mss.kichthuoc"))
-  (if lay
-    (progn
-      (setvar "clayer" "_mss.kichthuoc")
-      (prompt "\n✅ Đã chuyển sang layer _mss.kichthuoc.")
-    )
-    (prompt "\n⚠️ Layer _mss.kichthuoc không tồn tại, vẫn tiếp tục vẽ.")
-  )
   (command "dimlinear"))
 
 ;lệnh find-f1
