@@ -385,7 +385,7 @@
   (setq keyword (getkword "Ban muon ve song tron <tr>, thoi <th> hay song vuong <v>"))
   (cond
     ((= keyword "tr") ;tron r=17.25
-     (setq dk 17.25)) ; ket thuc dk1
+     (setq dk 17.6)) ; ket thuc dk1
     ((= keyword "th") ;thoi r= 20.75
      (setq dk 20.75 )) ; ket thuc dk2
     ((= keyword "v") ;vuong  = 15.5
