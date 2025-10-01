@@ -1174,14 +1174,46 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   (vl-load-com)
   (setq step 1)
   (setvar "osmode" 16384)
-
-  ;; Hàm lấy measurement từ DIM
-  (defun get-dim-measurement (ent)
-    (if (and ent (setq entObj (vlax-ename->vla-object ent)))
-      (vla-get-measurement entObj)
-      nil
+  
+  (defun get-dim-measurement (ent / entObj objType measurement)
+  (if (and ent (setq entObj (vlax-ename->vla-object ent)))
+    (progn
+      (setq objType (vla-get-ObjectName entObj))
+      (cond
+        ;; Dimension
+        ((wcmatch objType "*Dimension")
+         (setq measurement (vla-get-Measurement entObj))
+        )
+        ;; Line
+        ((= objType "AcDbLine")
+         (setq measurement
+               (distance
+                 (vlax-get entObj 'StartPoint)
+                 (vlax-get entObj 'EndPoint)
+               )
+         )
+        )
+        ;; Polyline (2D/3D/LWPolyline)
+        ((wcmatch objType "AcDb*Polyline")
+         (setq measurement 
+               (vlax-curve-getDistAtParam ent (vlax-curve-getEndParam ent))
+         )
+        )
+        ;; Arc
+        ((= objType "AcDbArc")
+         (setq measurement (vla-get-ArcLength entObj))
+        )
+        ;; Circle (thêm luôn cho đủ bộ)
+        ((= objType "AcDbCircle")
+         (setq measurement (* 2 pi (vla-get-Radius entObj)))
+        )
+      )
     )
   )
+    measurement
+  )
+
+
 
   ;; Hàm tạo RECTANG + ghi dim
   (defun make-rect (base-pt len width)
@@ -1206,7 +1238,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
   ;; Vòng lặp 2 lần
   (repeat 2
-    (prompt (strcat "\nLần " (itoa step) ": Chọn đối tượng DIM bất kỳ..."))
+    (prompt (strcat "\nLần " (itoa step) ": Chọn đối tượng bất kỳ (DIM, PLINE, LINE)..."))
     (setq ent (car (entsel)))
     (if (and ent (setq meas (get-dim-measurement ent)))
       (progn
