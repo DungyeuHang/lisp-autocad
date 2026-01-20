@@ -1606,3 +1606,94 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 ;***************************************************************************************************************************************************************************************************************
 ;                                          <=============.............................. IPP ......................................... END;
 ;***************************************************************************************************************************************************************************************************************
+
+
+;***************************************************************************************************************************************************************************************************************
+;                                 START ............................... IPP-Insert-Phao Gia ..................................... =========>;
+;***************************************************************************************************************************************************************************************************************
+
+(defun c:DIMBN ( / blkEnt plEnt blkObj plObj
+                        blkMin blkMax plMin plMax
+                        blkXmin blkXmax blkYmin blkYmax
+                        plXmin plXmax plYmin plYmax blkXmid blkYmid dimXInside dimYAbove
+                        ptBlk ptPl dimPos )
+
+  (vl-load-com)
+
+  ;; chọn block
+  (setq blkEnt (car (entsel "\nChọn BLOCK: ")))
+  (if (null blkEnt) (exit))
+
+  ;; chọn polyline
+  (setq plEnt (car (entsel "\nChọn POLYLINE: ")))
+  (if (null plEnt) (exit))
+
+  ;; object
+  (setq blkObj (vlax-ename->vla-object blkEnt))
+  (setq plObj  (vlax-ename->vla-object plEnt))
+
+  ;; bounding box block
+  (vla-getBoundingBox blkObj 'blkMin 'blkMax)
+  (setq blkMin (vlax-safearray->list blkMin))
+  (setq blkMax (vlax-safearray->list blkMax))
+
+  ;; bounding box polyline
+  (vla-getBoundingBox plObj 'plMin 'plMax)
+  (setq plMin (vlax-safearray->list plMin))
+  (setq plMax (vlax-safearray->list plMax))
+
+  ;; tách tọa độ
+  (setq blkXmin (car blkMin)
+        blkYmin (cadr blkMin)
+        blkXmax (car blkMax)
+        blkYmax (cadr blkMax))
+
+  (setq plXmin (car plMin)
+        plYmin (cadr plMin)
+        plXmax (car plMax)
+        plYmax (cadr plMax))
+
+  ;; =====================
+  ;; ===== TÍNH TÂM BLOCK =====
+  (setq blkXmid (/ (+ blkXmin blkXmax) 2.0))
+  (setq blkYmid (/ (+ blkYmin blkYmax) 2.0))
+    
+  ;; ===== THAM SỐ CANH DIM =====
+  (setq dimXInside (- plXmin 200))   ;; DIM đứng nằm trong khung
+  (setq dimYAbove  (+ plYmax 200))   ;; DIM ngang treo lên trên
+
+  ;; ===== DIM TRÊN (Y MAX) =====
+  (setq ptBlk (list blkXmin blkYmax 0))
+  (setq ptPl  (list blkXmin plYmax 0))
+  (setq dimPos (list dimXInside (+ plYmax 120) 0))
+  (command "DIMLINEAR" ptBlk ptPl dimPos "")
+
+  ;; ===== DIM DƯỚI (Y MIN) =====
+  (setq ptBlk (list blkXmin blkYmin 0))
+  (setq ptPl  (list blkXmin plYmin 0))
+  (setq dimPos (list dimXInside (- plYmin 120) 0))
+  (command "DIMLINEAR" ptBlk ptPl dimPos "")
+
+  ;; ===== DIM TRÁI (X MIN) =====
+  (setq ptBlk (list blkXmin blkYmin 0))
+  (setq ptPl  (list plXmin blkYmin 0))
+  (setq dimPos (list (- plXmin 120) dimYAbove 0))
+  (command "DIMLINEAR" ptBlk ptPl dimPos "")
+
+  ;; ===== DIM PHẢI (X MAX) =====
+  (setq ptBlk (list blkXmax blkYmin 0))
+  (setq ptPl  (list plXmax blkYmin 0))
+  (setq dimPos (list (+ plXmax 120) dimYAbove 0))
+  (command "DIMLINEAR" ptBlk ptPl dimPos "")
+
+
+  (princ "\nĐã DIM xong BLOCK với POLYLINE.")
+  (princ)
+)
+
+
+;***************************************************************************************************************************************************************************************************************
+;                                          <=============.............................. IPP ......................................... END;
+;***************************************************************************************************************************************************************************************************************
+
+
