@@ -1609,40 +1609,89 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
 
 ;***************************************************************************************************************************************************************************************************************
-;                                 START ............................... IPP-Insert-Phao Gia ..................................... =========>;
+;                                 START ............................... DIMBN ..................................... =========>;
 ;***************************************************************************************************************************************************************************************************************
 
-(defun c:DIMBN ( / blkEnt plEnt blkObj plObj
-                        blkMin blkMax plMin plMax
-                        blkXmin blkXmax blkYmin blkYmax
-                        plXmin plXmax plYmin plYmax blkXmid blkYmid dimXInside dimYAbove
-                        ptBlk ptPl dimPos )
+(defun get-selection-bbox (selectionSet / index entity obj
+                                         minVar maxVar
+                                         entityMin entityMax
+                                         globalMin globalMax)
+  (setq index 0)
+
+  (while (< index (sslength selectionSet))
+    (setq entity (ssname selectionSet index))
+    (setq obj (vlax-ename->vla-object entity))
+
+    (if (vlax-method-applicable-p obj 'GetBoundingBox)
+      (progn
+        (vla-getBoundingBox obj 'minVar 'maxVar)
+        (setq entityMin (vlax-safearray->list minVar))
+        (setq entityMax (vlax-safearray->list maxVar))
+
+        (if (null globalMin)
+          (progn
+            (setq globalMin entityMin)
+            (setq globalMax entityMax)
+          )
+          (progn
+            (setq globalMin
+              (list
+                (min (car globalMin) (car entityMin))
+                (min (cadr globalMin) (cadr entityMin))
+                0
+              )
+            )
+            (setq globalMax
+              (list
+                (max (car globalMax) (car entityMax))
+                (max (cadr globalMax) (cadr entityMax))
+                0
+              )
+            )
+          )
+        )
+      )
+    )
+    (setq index (1+ index))
+  )
+
+  (list globalMin globalMax)
+)
+
+(defun c:DIMBN ( / selectionSet bbox
+                    blkMin blkMax plMin plMax
+                    blkXmin blkXmax blkYmin blkYmax
+                    plXmin  plXmax  plYmin  plYmax
+                    dimXInside dimYAbove
+                    ptBlk ptPl dimPos
+                    plEnt plObj )
 
   (vl-load-com)
 
-  ;; chọn block
-  (setq blkEnt (car (entsel "\nChọn BLOCK: ")))
-  (if (null blkEnt) (exit))
+  ;; ============================
+  ;; QUÉT ĐỐI TƯỢNG ĐO (BLOCK HOẶC CỤM)
+  (prompt "\nQuét đối tượng cần đo (Block hoặc cụm đối tượng): ")
+  (setq selectionSet (ssget))
+  (if (null selectionSet) (exit))
 
-  ;; chọn polyline
+  ;; ============================
+  ;; LẤY BOUNDING BOX TỔNG
+  (setq bbox (get-selection-bbox selectionSet))
+  (setq blkMin (car bbox))
+  (setq blkMax (cadr bbox))
+
+  ;; ============================
+  ;; CHỌN POLYLINE
   (setq plEnt (car (entsel "\nChọn POLYLINE: ")))
   (if (null plEnt) (exit))
 
-  ;; object
-  (setq blkObj (vlax-ename->vla-object blkEnt))
-  (setq plObj  (vlax-ename->vla-object plEnt))
-
-  ;; bounding box block
-  (vla-getBoundingBox blkObj 'blkMin 'blkMax)
-  (setq blkMin (vlax-safearray->list blkMin))
-  (setq blkMax (vlax-safearray->list blkMax))
-
-  ;; bounding box polyline
+  (setq plObj (vlax-ename->vla-object plEnt))
   (vla-getBoundingBox plObj 'plMin 'plMax)
   (setq plMin (vlax-safearray->list plMin))
   (setq plMax (vlax-safearray->list plMax))
 
-  ;; tách tọa độ
+  ;; ============================
+  ;; TÁCH TỌA ĐỘ
   (setq blkXmin (car blkMin)
         blkYmin (cadr blkMin)
         blkXmax (car blkMax)
@@ -1653,47 +1702,44 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
         plXmax (car plMax)
         plYmax (cadr plMax))
 
-  ;; =====================
-  ;; ===== TÍNH TÂM BLOCK =====
-  (setq blkXmid (/ (+ blkXmin blkXmax) 2.0))
-  (setq blkYmid (/ (+ blkYmin blkYmax) 2.0))
-    
-  ;; ===== THAM SỐ CANH DIM =====
-  (setq dimXInside (- plXmin 200))   ;; DIM đứng nằm trong khung
-  (setq dimYAbove  (+ plYmax 200))   ;; DIM ngang treo lên trên
+  ;; ============================
+  ;; THAM SỐ DIM
+  (setq dimXInside (- plXmin 200))
+  (setq dimYAbove  (+ plYmax 200))
 
-  ;; ===== DIM TRÊN (Y MAX) =====
+  ;; ============================
+  ;; DIM TRÊN
   (setq ptBlk (list blkXmin blkYmax 0))
   (setq ptPl  (list blkXmin plYmax 0))
   (setq dimPos (list dimXInside (+ plYmax 120) 0))
-  (command "DIMLINEAR" ptBlk ptPl dimPos "")
+  (command "_.DIMLINEAR" ptBlk ptPl dimPos "")
 
-  ;; ===== DIM DƯỚI (Y MIN) =====
+  ;; DIM DƯỚI
   (setq ptBlk (list blkXmin blkYmin 0))
   (setq ptPl  (list blkXmin plYmin 0))
   (setq dimPos (list dimXInside (- plYmin 120) 0))
-  (command "DIMLINEAR" ptBlk ptPl dimPos "")
+  (command "_.DIMLINEAR" ptBlk ptPl dimPos "")
 
-  ;; ===== DIM TRÁI (X MIN) =====
+  ;; DIM TRÁI
   (setq ptBlk (list blkXmin blkYmin 0))
   (setq ptPl  (list plXmin blkYmin 0))
   (setq dimPos (list (- plXmin 120) dimYAbove 0))
-  (command "DIMLINEAR" ptBlk ptPl dimPos "")
+  (command "_.DIMLINEAR" ptBlk ptPl dimPos "")
 
-  ;; ===== DIM PHẢI (X MAX) =====
+  ;; DIM PHẢI
   (setq ptBlk (list blkXmax blkYmin 0))
   (setq ptPl  (list plXmax blkYmin 0))
   (setq dimPos (list (+ plXmax 120) dimYAbove 0))
-  (command "DIMLINEAR" ptBlk ptPl dimPos "")
+  (command "_.DIMLINEAR" ptBlk ptPl dimPos "")
 
-
-  (princ "\nĐã DIM xong BLOCK với POLYLINE.")
+  (princ "\n✔ DIM xong – tự nhận dạng Block / Cụm đối tượng.")
   (princ)
 )
 
 
+
 ;***************************************************************************************************************************************************************************************************************
-;                                          <=============.............................. IPP ......................................... END;
+;                                          <=============.............................. DIMBN ......................................... END;
 ;***************************************************************************************************************************************************************************************************************
 
 
