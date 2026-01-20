@@ -124,8 +124,15 @@
 ;;;;;;;;;; end of CES ;;;;;;;;;
 
 
+;;;;;;;;;;;;;;;;;;  < Dungx auto insert SIGNATURE by frame > ;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;;;;;;;;;;             < Dungx insert -dungx >            ;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;        DUNGX - AUTO INSERT SIGNATURE BY FRAME           ;;
+;;        Sort: RIGHT  →  LEFT                             ;;
+;;        Layer frame: _mss.in                              ;;
+;;        Layer text : _mss.phantom                         ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun create-text (pt txt hgt lay / doc mspace txtobj)
   (setq doc (vla-get-activedocument (vlax-get-acad-object)))
   (setq mspace (vla-get-modelspace doc))
@@ -134,54 +141,109 @@
   txtobj
 )
 
-(defun c:dungx (/ pt time date-string year month day formatted-date new-pt new-pt1 iii)
-  (prompt "\n🚀 Đang xử lý...")
+(defun get-max-point-of-entity (ent / obj minpt maxpt)
+  (setq obj (vlax-ename->vla-object ent))
+  (vla-getboundingbox obj 'minpt 'maxpt)
+  (vlax-safearray->list maxpt)
+)
+
+(defun sort-frames-right-to-left (ss / idx ent maxpt lst)
+  (setq idx 0 lst '())
+  (while (< idx (sslength ss))
+    (setq ent (ssname ss idx))
+    (setq maxpt (get-max-point-of-entity ent))
+    ;; lưu (Xmax . entity)
+    (setq lst (cons (cons (car maxpt) ent) lst))
+    (setq idx (1+ idx))
+  )
+  ;; sort theo X giảm dần (phải → trái)
+  (vl-sort lst '(lambda (a b) (> (car a) (car b))))
+)
+
+(defun c:dungx (/ ss frame-list ent maxpt
+                  ins-pt date-pt no-pt
+                  time date-string year month day formatted-date
+                  offset-x offset-y iii)
+
+  (prompt "\n🚀 DUNGX: Đang quét khung in và insert tag tự động...")
+
+  ;; ====== CẤU HÌNH ======
+  (setq offset-x 200)   ;; thụt trái
+  (setq offset-y 150)   ;; thụt xuống
+  ;; =====================
+
+  (setvar "osmode" 0)
   (setvar "clayer" "_mss.phantom")
+
+  ;; kiểm tra block
+  (if (not (tblsearch "block" "SIGNATURE"))
+    (progn
+      (princ "\n❌ Không tìm thấy block SIGNATURE.")
+      (exit)
+    )
+  )
+
+  ;; lọc khung in
+  (setq ss (ssget "X"
+            '(
+              (0 . "LWPOLYLINE")
+              (8 . "_mss.in")
+            )
+          )
+  )
+
+  (if (not ss)
+    (progn
+      (princ "\n⚠️ Không tìm thấy polyline layer _mss.in.")
+      (exit)
+    )
+  )
+
+  ;; sort phải → trái
+  (setq frame-list (sort-frames-right-to-left ss))
+
+  ;; lấy ngày hệ thống
+  (setq time (getvar "CDATE"))
+  (setq date-string (substr (rtos time 2 6) 1 8))
+  (setq year  (substr date-string 1 4))
+  (setq month (substr date-string 5 2))
+  (setq day   (substr date-string 7 2))
+  (setq formatted-date (strcat day "/" month "/" year))
+
   (setq iii 1)
-  (setvar "osmode" 16384)
 
-  (while (setq pt (getpoint "\n💬 Chọn điểm chèn (Nhấn Enter để thoát): "))
+  ;; ====== INSERT ======
+  (foreach frame frame-list
+    (setq ent (cdr frame))
+    (setq maxpt (get-max-point-of-entity ent))
 
-    ;; Kiểm tra block SIGNATURE có tồn tại
-    (if (not (tblsearch "block" "SIGNATURE"))
-      (progn
-        (princ "\n⚠️ Block SIGNATURE không tồn tại. Hãy kiểm tra lại.")
-        (exit)
-      )
+    ;; điểm chèn block
+    (setq ins-pt
+          (list
+            (- (car maxpt) offset-x)
+            (- (cadr maxpt) offset-y)
+            0
+          )
     )
 
-    ;; Chèn block SIGNATURE
-    (command "_.-insert" "SIGNATURE" pt "" "")
+    (command "_.-insert" "SIGNATURE" ins-pt "" "")
 
-    ;; Lấy ngày giờ hệ thống
-    (setq time (getvar "Cdate"))
-    (setq date-string (rtos time 2 6))
-    (setq date-string (substr date-string 1 8))
-    (setq year (substr date-string 1 4))
-    (setq month (substr date-string 5 2))
-    (setq day (substr date-string 7 2))
-    (setq formatted-date (strcat day "/" month "/" year))
+    ;; vị trí text
+    (setq date-pt (list (- (car ins-pt) 200) (- (cadr ins-pt) 150) 0))
+    (setq no-pt   (list (- (car ins-pt) 100) (- (cadr ins-pt) 250) 0))
 
-    ;; Tính điểm chèn text
-    (setq new-pt (list (-(car pt) 200) (+ (cadr pt) -150) 0))
-    (setq new-pt1 (list (-(car pt) 100) (+ (cadr pt) -250) 0))
+    (create-text date-pt formatted-date 55 "_mss.phantom")
+    (create-text no-pt (strcat "NO." (itoa iii)) 55 "_mss.phantom")
 
-    ;; Tạo text bằng VLA
-    (create-text new-pt formatted-date 55 "_mss.phantom")
-    (create-text new-pt1 (strcat "NO." (itoa iii)) 55 "_mss.phantom")
-
-    (prompt "\n✅ Đã chèn block và text...")
-
-    ;; Tăng số thứ tự
     (setq iii (1+ iii))
   )
 
   (setvar "osmode" 16383)
   (setvar "clayer" "_mss.kichthuoc")
-  (prompt "\n🏁 ĐÃ XỬ LÝ XONG.")
+
+  (prompt (strcat "\n✅ HOÀN THÀNH: " (itoa (1- iii)) " khung đã được tag."))
   (princ)
 )
-
 
 
 ;;;;;;;;;;;;;;;;;;;;  end of DUNGX  ;;;;;;;;;;;;;
