@@ -1086,70 +1086,110 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
 
 
+;;;;;;;;;;;;;;;;;;; Start of CDD-CHIADIM (VLA SAFE VERSION) ;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;; Start of chia Dim (FIXED SAFE VERSION) ;;;;;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;;;;;;;;;;; Start of chia Dim ;;;;;;;;;;;;;;;;;;;;;;
-
-(defun c:CDD-CHIADIM (/ ent entData pt1 pt2 ptDim ptList tmpPt ii pA pB midPt dirVec)
+(defun c:CDD-CHIADIM (/ *error* ent entData pt1 pt2 ptDim
+                        ptList tmpPt ii pA pB)
 
   (vl-load-com)
 
-  ;; Hàm vector đơn vị
-  (defun getDirVec (p1 p2)
-    (setq v (mapcar '- p2 p1))
-    (setq len (distance p1 p2))
-    (if (/= len 0)
-      (mapcar '(lambda (x) (/ x len)) v)
-      '(1 0)
+  ;; ================= ERROR HANDLER =================
+  (defun *error* (msg)
+    (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*EXIT*")))
+      (princ (strcat "\nLỗi: " msg))
     )
+    (command-s) ;; KẾT THÚC COMMAND ĐANG TREO (CỰC QUAN TRỌNG)
+    (princ)
   )
 
-  ;; Làm phẳng Z
-  (defun flatten (pt) (list (car pt) (cadr pt) 0.0))
+  ;; ================= HELPER =================
+  (defun flatten (pt)
+    (if pt (list (car pt) (cadr pt) 0.0))
+  )
 
-  ;; Bắt đầu
+  ;; ================= SELECT DIM =================
   (prompt "\nChọn đối tượng DIM cần chia: ")
   (setq ent (car (entsel)))
-  (if (and ent (= (cdr (assoc 0 (entget ent))) "DIMENSION"))
+
+  (if (not ent)
     (progn
-      ;; Lấy dữ liệu
-      (setq entData (entget ent))
-      (setq pt1 (flatten (cdr (assoc 13 entData))))
-      (setq pt2 (flatten (cdr (assoc 14 entData))))
-      (setq ptDim (flatten (cdr (assoc 10 entData))))
-      (setq dirVec (getDirVec pt1 pt2))
-
-      ;; Chọn điểm chia
-      (prompt "\nChọn các điểm chia (Enter để kết thúc): ")
-      (setq ptList nil)
-      (while (setq tmpPt (getpoint "\nChọn điểm chia: "))
-        (setq ptList (append ptList (list (flatten tmpPt))))
-      )
-
-      ;; Thêm đầu/cuối và sắp xếp
-      (setq ptList (append (list pt1) ptList (list pt2)))
-      (setq ptList (vl-sort ptList '(lambda (a b) (< (distance pt1 a) (distance pt1 b)))))
-
-      ;; Xoá DIM cũ
-      (entdel ent)
-
-      ;; Dựng lại DIM
-      (setq ii 0)
-      (while (< ii (1- (length ptList)))
-        (setq pA (nth ii ptList))
-        (setq pB (nth (1+ ii) ptList))
-        (if (> (abs (- (car pA) (car pB))) (abs (- (cadr pA) (cadr pB))))
-          (command "_.DIMHORIZONTAL" "_non" pA "_non" pB "_non" ptDim)
-          (command "_.DIMVERTICAL" "_non" pA "_non" pB "_non" ptDim)
-        )
-        (setq ii (1+ ii))
-      )
+      (prompt "\nKhông chọn đối tượng.")
+      (exit)
     )
-    (prompt "\nKhông phải đối tượng DIM hợp lệ.")
   )
+
+  (setq entData (entget ent))
+
+  (if (/= (cdr (assoc 0 entData)) "DIMENSION")
+    (progn
+      (prompt "\nKhông phải đối tượng DIM hợp lệ.")
+      (exit)
+    )
+  )
+
+  ;; ================= GET DIM POINTS =================
+  (setq pt1   (flatten (cdr (assoc 13 entData))))
+  (setq pt2   (flatten (cdr (assoc 14 entData))))
+  (setq ptDim (flatten (cdr (assoc 10 entData))))
+
+  (if (or (null pt1) (null pt2) (null ptDim))
+    (progn
+      (prompt "\nDIM không đủ dữ liệu để chia.")
+      (exit)
+    )
+  )
+
+  ;; ================= PICK DIVISION POINTS =================
+  (prompt "\nChọn các điểm chia (Enter để kết thúc): ")
+  (setq ptList nil)
+
+  (while (setq tmpPt (getpoint "\nChọn điểm chia: "))
+    (setq ptList (append ptList (list (flatten tmpPt))))
+  )
+
+  (if (null ptList)
+    (progn
+      (prompt "\nKhông có điểm chia.")
+      (exit)
+    )
+  )
+
+  ;; ================= SORT POINTS =================
+  (setq ptList
+    (vl-sort
+      (append (list pt1) ptList (list pt2))
+      '(lambda (a b)
+         (< (distance pt1 a) (distance pt1 b)))
+    )
+  )
+
+  ;; ================= DELETE OLD DIM =================
+  (entdel ent)
+
+  ;; ================= CREATE NEW DIMS =================
+  (setq ii 0)
+  (while (< ii (1- (length ptList)))
+    (setq pA (nth ii ptList))
+    (setq pB (nth (1+ ii) ptList))
+
+    (if (> (abs (- (car pA) (car pB)))
+           (abs (- (cadr pA) (cadr pB))))
+      (command-s "_.DIMHORIZONTAL" "_non" pA "_non" pB "_non" ptDim)
+      (command-s "_.DIMVERTICAL"   "_non" pA "_non" pB "_non" ptDim)
+    )
+
+    (setq ii (1+ ii))
+  )
+
+  (princ "\nChia DIM xong – chạy ổn định.")
   (princ)
 )
 
 ;;;;;;;;;;;;;;;;;;; End of chia Dim ;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;; End of CDD-CHIADIM ;;;;;;;;;;;;;;;;;;;
 
 
 
