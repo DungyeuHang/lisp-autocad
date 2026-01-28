@@ -130,7 +130,7 @@
 
 ;;;;;;;;;;;;;;;;;;; End of 350 ;;;;;;;;;;;;;;;;;;;;;;
 
-
+;;;;;;;;;;;;;;;;;;; Start of 535 ;;;;;;;;;;;;;;;;;;;
 
 (defun c:535 ( / selectionSet entityCount index
                   entity entityType
@@ -230,3 +230,13 @@
   (insertBlockExplode blockLower centerTwo)
   (command "explode" (entlast))
 )
+
+;;;;;;;;;;;;;;;;;;; End of 535 ;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;; Start of TKK ;;;;;;;;;;;;;;;;;;;
+
+
+
+
+;;;;;;;;;;;;;;;;;;; End of TKK ;;;;;;;;;;;;;;;;;;;;;;
