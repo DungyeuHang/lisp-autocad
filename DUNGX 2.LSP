@@ -236,6 +236,96 @@
 
 ;;;;;;;;;;;;;;;;;;; Start of TKK ;;;;;;;;;;;;;;;;;;;
 
+(defun c:TKKTHAYKHOA ( / selectionSet circleList entityCount index
+                        entity entityType
+                        circleOne circleTwo
+                        centerOne centerTwo
+                        upperCircle lowerCircle
+                        upperCenter lowerCenter
+                        newCenterX offsetValue
+                        moveUpperVector moveLowerVector )
+
+  (vl-load-com)
+
+  ;; ===== CHỌN KHÓA CŨ =====
+  (setq selectionSet (ssget))
+  (if (not selectionSet)
+    (progn (princ "\nKhong co doi tuong.") (princ) (exit))
+  )
+
+  ;; ===== TÁCH CIRCLE =====
+  (setq circleList '())
+  (setq entityCount (sslength selectionSet))
+  (setq index 0)
+
+  (repeat entityCount
+    (setq entity (ssname selectionSet index))
+    (setq entityType (cdr (assoc 0 (entget entity))))
+
+    (if (= entityType "CIRCLE")
+      (setq circleList (cons entity circleList))
+      (entdel entity)
+    )
+
+    (setq index (1+ index))
+  )
+
+  ;; ===== KIỂM TRA SỐ LỖ =====
+  (if (/= (length circleList) 2)
+    (progn
+      (princ "\n❌ Phai co dung 2 lo tron trong nhom.")
+      (princ)
+      (exit)
+    )
+  )
+
+  ;; ===== ĐỔI LAYER =====
+  (foreach circleEntity circleList
+    (entmod
+      (subst
+        (cons 8 "_mss.dut")
+        (assoc 8 (entget circleEntity))
+        (entget circleEntity)
+      )
+    )
+  )
+
+  ;; ===== PHÂN LỖ TRÊN / DƯỚI =====
+  (setq circleOne (car circleList))
+  (setq circleTwo (cadr circleList))
+
+  (setq centerOne (cdr (assoc 10 (entget circleOne))))
+  (setq centerTwo (cdr (assoc 10 (entget circleTwo))))
+
+  (if (> (cadr centerOne) (cadr centerTwo))
+    (progn
+      (setq upperCircle circleOne)
+      (setq lowerCircle circleTwo)
+    )
+    (progn
+      (setq upperCircle circleTwo)
+      (setq lowerCircle circleOne)
+    )
+  )
+
+  ;; ===== NHẬP TÂM KHÓA MỚI =====
+  (setq newCenterX (getreal "\nNhap X tam khoa moi: "))
+  (if (not (numberp newCenterX))
+    (progn (princ "\nGia tri X khong hop le.") (exit))
+  )
+
+  (setq offsetValue (- newCenterX 45))
+
+  ;; ===== DỊCH CHUYỂN THEO ĐỘ LỆCH TÂM =====
+  (setq moveUpperVector (list 0 (- (- offsetValue 1)) 0))
+  (setq moveLowerVector (list 0 (- offsetValue) 0))
+
+  (command "_.move" upperCircle "" '(0 0 0) moveUpperVector)
+  (command "_.move" lowerCircle "" '(0 0 0) moveLowerVector)
+  (command "copy" )
+  
+  
+)
 
 
 
