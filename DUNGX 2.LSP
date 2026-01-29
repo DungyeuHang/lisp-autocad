@@ -354,16 +354,34 @@
         (ssget '((0 . "CIRCLE,LINE,ARC,LWPOLYLINE,TEXT,MTEXT"))))
   (if (not selectionSetNewLock) (exit))
 
-  ;; Lấy tâm khóa mới (1 circle duy nhất)
-  (setq newLockCenter
-        (cdr
-          (assoc 10
-            (entget
-              (ssname (ssget "_P" '((0 . "CIRCLE"))) 0)
-            )
-          )
-        )
+  ;; =================================================
+  ;; XÁC ĐỊNH TÂM KHÓA MỚI
+  ;; - Nếu có CIRCLE → lấy tâm CIRCLE
+  ;; - Nếu KHÔNG có CIRCLE → cho người dùng chọn điểm
+  ;; =================================================
+  (setq newLockCenter nil)
+  (setq loopIndex 0)
+
+  (repeat (sslength selectionSetNewLock)
+    (setq currentEntity (ssname selectionSetNewLock loopIndex))
+    (setq currentEntityData (entget currentEntity))
+    (setq currentEntityType (cdr (assoc 0 currentEntityData)))
+
+    (if (and (null newLockCenter) (= currentEntityType "CIRCLE"))
+      (setq newLockCenter (cdr (assoc 10 currentEntityData)))
+    )
+
+    (setq loopIndex (1+ loopIndex))
   )
+
+  ;; Nếu KHÔNG có CIRCLE → cho pick tâm
+  (if (null newLockCenter)
+    (progn
+      (prompt "\n⚠️ Khóa mới KHÔNG có CIRCLE – vui lòng chọn tâm khóa mới.")
+      (setq newLockCenter (getpoint "\nChon tam khoa moi: "))
+    )
+  )
+
 
   ;; MOVE khóa mới theo lỗ trên
   (command "_.move" selectionSetNewLock "" "_none" newLockCenter "_none" upperHoleCenter)
