@@ -236,51 +236,69 @@
 
 ;;;;;;;;;;;;;;;;;;; Start of TKK ;;;;;;;;;;;;;;;;;;;
 
-(defun c:TKKTHAYKHOA ( / selectionSet circleList entityCount index
-                        entity entityType
-                        circleOne circleTwo
-                        centerOne centerTwo
-                        upperCircle lowerCircle
-                        upperCenter lowerCenter
-                        newCenterX offsetValue
-                        moveUpperVector moveLowerVector )
+;;;;;;;;;;;;;;;;;;; Start of TKK ;;;;;;;;;;;;;;;;;;;
+(defun c:TKKTHAYKHOA
+  (/ selectionSetOldLock selectionSetNewLock
+     circleEntityList
+     firstCircle secondCircle
+     firstCircleCenter secondCircleCenter
+     upperHoleCircle lowerHoleCircle
+     upperHoleCenter lowerHoleCenter
+     newLockCenterX offsetDistance
+     moveUpperHoleVector moveLowerHoleVector
+     newLockCenter
+     copySelectionSet
+     loopIndex
+     currentEntity currentEntityType currentEntityData)
 
   (vl-load-com)
 
-  ;; ===== CHỌN KHÓA CŨ =====
-  (setq selectionSet (ssget))
-  (if (not selectionSet)
-    (progn (princ "\nKhong co doi tuong.") (princ) (exit))
-  )
+  ;; =================================================
+  ;; PHẦN 1 – XỬ LÝ KHÓA CŨ
+  ;; =================================================
+  (prompt "\nChon khoa cu: ")
+  (setq selectionSetOldLock (ssget))
+  (if (not selectionSetOldLock) (exit))
 
-  ;; ===== TÁCH CIRCLE =====
-  (setq circleList '())
-  (setq entityCount (sslength selectionSet))
-  (setq index 0)
+  (setq circleEntityList '())
+  (setq loopIndex 0)
 
-  (repeat entityCount
-    (setq entity (ssname selectionSet index))
-    (setq entityType (cdr (assoc 0 (entget entity))))
+  ;; Tách circle trong khóa cũ
+  (repeat (sslength selectionSetOldLock)
+    (setq currentEntity (ssname selectionSetOldLock loopIndex))
+    (setq currentEntityData (entget currentEntity))
+    (setq currentEntityType (cdr (assoc 0 currentEntityData)))
 
-    (if (= entityType "CIRCLE")
-      (setq circleList (cons entity circleList))
-      (entdel entity)
+    (if (= currentEntityType "CIRCLE")
+      (setq circleEntityList (cons currentEntity circleEntityList))
     )
 
-    (setq index (1+ index))
+    (setq loopIndex (1+ loopIndex))
   )
 
-  ;; ===== KIỂM TRA SỐ LỖ =====
-  (if (/= (length circleList) 2)
+  (if (/= (length circleEntityList) 2)
     (progn
-      (princ "\n❌ Phai co dung 2 lo tron trong nhom.")
-      (princ)
+      (princ "\n❌ Khoa cu phai co dung 2 CIRCLE.")
       (exit)
     )
   )
+  ;; ===== XÓA LỖ KHÓA CŨ (KHÔNG PHẢI CIRCLE) =====
+  (setq loopIndex 0)
+  (repeat (sslength selectionSetOldLock)
+    (setq currentEntity (ssname selectionSetOldLock loopIndex))
+    (setq currentEntityData (entget currentEntity))
+    (setq currentEntityType (cdr (assoc 0 currentEntityData)))
 
-  ;; ===== ĐỔI LAYER =====
-  (foreach circleEntity circleList
+    (if (member currentEntityType '("LINE" "ARC" "LWPOLYLINE"))
+      (entdel currentEntity)
+    )
+
+    (setq loopIndex (1+ loopIndex))
+  )
+
+  
+  ;; Đổi layer 2 lỗ
+  (foreach circleEntity circleEntityList
     (entmod
       (subst
         (cons 8 "_mss.dut")
@@ -290,43 +308,93 @@
     )
   )
 
-  ;; ===== PHÂN LỖ TRÊN / DƯỚI =====
-  (setq circleOne (car circleList))
-  (setq circleTwo (cadr circleList))
+  ;; Phân lỗ trên / dưới
+  (setq firstCircle (car circleEntityList))
+  (setq secondCircle (cadr circleEntityList))
 
-  (setq centerOne (cdr (assoc 10 (entget circleOne))))
-  (setq centerTwo (cdr (assoc 10 (entget circleTwo))))
+  (setq firstCircleCenter (cdr (assoc 10 (entget firstCircle))))
+  (setq secondCircleCenter (cdr (assoc 10 (entget secondCircle))))
 
-  (if (> (cadr centerOne) (cadr centerTwo))
+  (if (> (cadr firstCircleCenter) (cadr secondCircleCenter))
     (progn
-      (setq upperCircle circleOne)
-      (setq lowerCircle circleTwo)
+      (setq upperHoleCircle firstCircle)
+      (setq lowerHoleCircle secondCircle)
+      (setq upperHoleCenter firstCircleCenter)
+      (setq lowerHoleCenter secondCircleCenter)
     )
     (progn
-      (setq upperCircle circleTwo)
-      (setq lowerCircle circleOne)
+      (setq upperHoleCircle secondCircle)
+      (setq lowerHoleCircle firstCircle)
+      (setq upperHoleCenter secondCircleCenter)
+      (setq lowerHoleCenter firstCircleCenter)
     )
   )
 
-  ;; ===== NHẬP TÂM KHÓA MỚI =====
-  (setq newCenterX (getreal "\nNhap X tam khoa moi: "))
-  (if (not (numberp newCenterX))
-    (progn (princ "\nGia tri X khong hop le.") (exit))
+  ;; Nhập X tâm khóa mới
+  (setq newLockCenterX (getreal "\nNhap X tam khoa moi: "))
+  (setq offsetDistance (- newLockCenterX 45))
+
+  (setq moveUpperHoleVector (list 0 (- (- offsetDistance 1)) 0))
+  (setq moveLowerHoleVector (list 0 (- offsetDistance) 0))
+
+  ;; Move 2 lỗ
+  (command "_.move" upperHoleCircle "" '(0 0 0) moveUpperHoleVector)
+  (command "_.move" lowerHoleCircle "" '(0 0 0) moveLowerHoleVector)
+
+  ;; Cập nhật tâm mới
+  (setq upperHoleCenter (cdr (assoc 10 (entget upperHoleCircle))))
+  (setq lowerHoleCenter (cdr (assoc 10 (entget lowerHoleCircle))))
+
+
+  ;; =================================================
+  ;; PHẦN 2 – LẮP KHÓA MỚI
+  ;; =================================================
+  (prompt "\nChon khoa moi: ")
+  (setq selectionSetNewLock
+        (ssget '((0 . "CIRCLE,LINE,ARC,LWPOLYLINE,TEXT,MTEXT"))))
+  (if (not selectionSetNewLock) (exit))
+
+  ;; Lấy tâm khóa mới (1 circle duy nhất)
+  (setq newLockCenter
+        (cdr
+          (assoc 10
+            (entget
+              (ssname (ssget "_P" '((0 . "CIRCLE"))) 0)
+            )
+          )
+        )
   )
 
-  (setq offsetValue (- newCenterX 45))
+  ;; MOVE khóa mới theo lỗ trên
+  (command "_.move" selectionSetNewLock "" "_none" newLockCenter "_none" upperHoleCenter)
 
-  ;; ===== DỊCH CHUYỂN THEO ĐỘ LỆCH TÂM =====
-  (setq moveUpperVector (list 0 (- (- offsetValue 1)) 0))
-  (setq moveLowerVector (list 0 (- offsetValue) 0))
+  ;; COPY lỗ dưới (loại TEXT + RECTANGLE)
+  (setq copySelectionSet (ssadd))
+  (setq loopIndex 0)
 
-  (command "_.move" upperCircle "" '(0 0 0) moveUpperVector)
-  (command "_.move" lowerCircle "" '(0 0 0) moveLowerVector)
-  (command "copy" )
-  
-  
+  (repeat (sslength selectionSetNewLock)
+    (setq currentEntity (ssname selectionSetNewLock loopIndex))
+    (setq currentEntityData (entget currentEntity))
+    (setq currentEntityType (cdr (assoc 0 currentEntityData)))
+
+    (if (and
+          (not (member currentEntityType '("TEXT" "MTEXT")))
+          (not (and
+                 (= currentEntityType "LWPOLYLINE")
+                 (= (logand 1 (cdr (assoc 70 currentEntityData))) 1)
+               ))
+        )
+      (ssadd currentEntity copySelectionSet)
+    )
+
+    (setq loopIndex (1+ loopIndex))
+  )
+
+  (command "_.copy" copySelectionSet "" "_none" upperHoleCenter "_none" lowerHoleCenter)
+
+  (princ "\n🔥 TKKTHAYKHOA – CHAY ON DINH, BIEN AN TOAN.")
+  (princ)
 )
+;;;;;;;;;;;;;;;;;;; End of TKK ;;;;;;;;;;;;;;;;;;;
 
-
-
-;;;;;;;;;;;;;;;;;;; End of TKK ;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;; END of TKK ;;;;;;;;;;;;;;;;;;;
