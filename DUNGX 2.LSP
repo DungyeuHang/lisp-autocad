@@ -414,3 +414,67 @@
   (princ)
 )
 ;;;;;;;;;;;;;;;;;;; End of TKK ;;;;;;;;;;;;;;;;;;;
+
+
+(defun c:SAY_STRETCH_BY_DIM ( / dimNew dimOld valNew valOld delta p1 p2)
+  (prompt "\n=== STRETCH THEO DIM NGANG ===")
+
+  ;; DIM CẦN THÀNH
+  (setq dimNew (car (entsel "\nChọn DIM Doc cần thành: ")))
+  (if (not dimNew) (exit))
+
+  ;; DIM BAN ĐẦU
+  (setq dimOld (car (entsel "\nChọn DIM Doc ban đầu: ")))
+  (if (not dimOld) (exit))
+
+  ;; LẤY GIÁ TRỊ
+  (setq valNew (cdr (assoc 42 (entget dimNew))))
+  (setq valOld (cdr (assoc 42 (entget dimOld))))
+
+  (setq delta (- valNew valOld))
+
+  (prompt (strcat "\nDelta = " (rtos delta 2 2)))
+
+  ;; USER QUÉT VÙNG STRETCH
+  (setvar "osmode" 16384)
+  (setq d1 (list 0 0))
+  (setq d2 (list 0  (+ 0 delta) ))
+  (setq doituong1 (ssget))
+  (command "stretch" doituong1 "" d1 d2  "") ;(command "stretch" )
+
+  (prompt "\n✔ STRETCH Doc XONG.")
+  (princ)
+)
+
+(defun c:SAX_STRETCH_BY_DIM ( / dimNew dimOld valNew valOld delta p1 p2)
+  (prompt "\n=== STRETCH THEO DIM ngang ===")
+
+  ;; DIM CẦN THÀNH
+  (setq dimNew (car (entsel "\nChọn DIM ngang cần thành: ")))
+  (if (not dimNew) (exit))
+
+  ;; DIM BAN ĐẦU
+  (setq dimOld (car (entsel "\nChọn DIM ngang ban đầu: ")))
+  (if (not dimOld) (exit))
+
+  ;; LẤY GIÁ TRỊ
+  (setq valNew (cdr (assoc 42 (entget dimNew))))
+  (setq valOld (cdr (assoc 42 (entget dimOld))))
+
+  (setq delta (- valNew valOld))
+  (setq delta (/ delta 2))
+  (prompt (strcat "\nDelta = " (rtos delta 2 2)))
+
+  ;; USER QUÉT VÙNG STRETCH
+  (setvar "osmode" 16384)
+  (setq d1 (list 0 0))
+  (setq d2 (list (- 0 delta)  0 ))
+  (setq doituong1 (ssget))
+  (command "stretch" doituong1 "" d1 d2  "") ;(command "stretch" )
+  (setq doituong2 (ssget))
+  (setq d3 (list  (+ 0 delta) 0 ))
+  (command "stretch" doituong2 "" d1 d3  "") ;(command "stretch" )
+  
+  (prompt "\n✔ STRETCH ngang XONG.")
+  (princ)
+)
