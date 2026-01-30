@@ -416,7 +416,7 @@
 ;;;;;;;;;;;;;;;;;;; End of TKK ;;;;;;;;;;;;;;;;;;;
 
 
-(defun c:SAY_STRETCH_BY_DIM ( / dimNew dimOld valNew valOld delta p1 p2)
+(defun c:SAY_STRETCH_BY_DIM ( / dimNew dimOld valNew valOld delta d1 d2 doituong1)
   (prompt "\n=== STRETCH THEO DIM NGANG ===")
 
   ;; DIM CẦN THÀNH
@@ -443,10 +443,11 @@
   (command "stretch" doituong1 "" d1 d2  "") ;(command "stretch" )
 
   (prompt "\n✔ STRETCH Doc XONG.")
+  (setvar "osmode" 16383)
   (princ)
 )
 
-(defun c:SAX_STRETCH_BY_DIM ( / dimNew dimOld valNew valOld delta p1 p2)
+(defun c:SAX_STRETCH_BY_DIM ( / dimNew dimOld valNew valOld delta d1 d2 doituong1 doituong2 d3)
   (prompt "\n=== STRETCH THEO DIM ngang ===")
 
   ;; DIM CẦN THÀNH
@@ -476,5 +477,6 @@
   (command "stretch" doituong2 "" d1 d3  "") ;(command "stretch" )
   
   (prompt "\n✔ STRETCH ngang XONG.")
+  (setvar "osmode" 16384)
   (princ)
 )
