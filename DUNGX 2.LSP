@@ -546,7 +546,7 @@
 	)	
 )
 ;; ================== LỆNH CHÍNH ==================
-(defun c:DDD
+(defun c:DCS
   (
     /
     oldos
