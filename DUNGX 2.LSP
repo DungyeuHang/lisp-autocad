@@ -481,8 +481,7 @@
   (princ)
 )
 
-
-;; ================== H�M G?P SELECTION SET ==================
+;; ================== HÀM GỘP SELECTION SET ==================
 (defun ss-merge (ss1 ss2 / ss i)
   (setq ss (ssadd))
   (foreach s (list ss1 ss2)
@@ -498,24 +497,85 @@
   )
   ss
 )
+(defun mirrorByVerticalLine (ss / entLine data p1 p2 mid mirrorP1 mirrorP2)
+  (prompt "\nChon LINE lam truc mirror (line dung): ")
+  (setq entLine (car (entsel)))
 
-;; ================== L?NH CH�NH ==================
-(defun c:DS
-  (
-   
+  (if (and entLine
+           (= "LINE" (cdr (assoc 0 (entget entLine)))))
+    (progn
+      (setq data (entget entLine))
+      (setq p1 (cdr (assoc 10 data)))
+      (setq p2 (cdr (assoc 11 data)))
+
+      ;; tâm line
+      (setq mid
+        (list
+          (/ (+ (car p1) (car p2)) 2.0)
+          (/ (+ (cadr p1) (cadr p2)) 2.0)
+          0.0
+        )
+      )
+
+      ;; 2 điểm mirror (trục đứng)
+      (setq mirrorP1 mid)
+      (setq mirrorP2 (list (+ (car mid) 1.0) (cadr mid) 0.0))
+
+      ;; mirror toàn bộ selection
+      (command "_.MIRROR" ss "" mirrorP1 mirrorP2 "_N")
+    )
+    (prompt "\n❌ Phai chon LINE.")
   )
-  (vl-load-com)
-  ;; ===== LUU & T?T OSNAP =====
+)
+
+(defun ssnewer (ent / ss ent1)
+	(if ent
+		(progn
+			(setq ent1 ent)
+			(while (setq ent1 (entnext ent1))
+				(if ent1
+					(progn
+						(if (NULL ss) (setq ss (ssadd)))
+						(setq ss (ssadd ent1 ss))
+					)
+				)
+			)
+			ss
+		)
+		nil
+	)	
+)
+;; ================== LỆNH CHÍNH ==================
+(defun c:DDD
+  (
+    /
+    oldos
+    entLine dataLine p1 p2
+    tam goc len n
+    ssNew
+    t0 t1 t2 t3 t4
+    entPoly
+    pStart pEnd entShort
+    i pTo entNew
+    d pLeft pIn
+    ssBefore
+    entBefore
+    ssMirrorNew
+    ssAll
+  )
+
+
+  ;; ===== LƯU & TẮT OSNAP =====
   (setq oldos (getvar "OSMODE"))
   (setvar "OSMODE" 0)
 
-  ;; ===== T?O / SET LAYER =====
+  ;; ===== TẠO / SET LAYER =====
   (if (not (tblsearch "LAYER" "_mss.bao"))
     (command "_.LAYER" "_M" "_mss.bao" "")
   )
   (setvar "CLAYER" "_mss.bao")
 
-  ;; ===== CH?N �O?N TH?NG D�I =====
+  ;; ===== CHỌN ĐOẠN THẲNG DÀI =====
   (setq entLine (entsel "\nChon doan thang dai: "))
   (if (and entLine
            (= "LINE" (cdr (assoc 0 (entget (car entLine))))))
@@ -524,7 +584,7 @@
       (setq p1 (cdr (assoc 10 dataLine)))
       (setq p2 (cdr (assoc 11 dataLine)))
 
-      ;; ===== TH�NG S? =====
+      ;; ===== THÔNG SỐ =====
       (setq tam (mapcar '(lambda (a b) (/ (+ a b) 2.0)) p1 p2))
       (setq goc (angle p1 p2))
       (setq len (distance p1 p2))
@@ -532,7 +592,7 @@
 
       (setq ssNew (ssadd))
 
-      ;; ===== V? �A GI�C M?U =====
+      ;; ===== VẼ ĐA GIÁC MẪU =====
       (setq t0 tam)
       (setq t1 (polar t0 goc 1.25))
       (setq t2 (polar t1 (+ goc (/ pi 2)) 1.0))
@@ -547,14 +607,14 @@
 
       (ssadd entPoly ssNew)
 
-      ;; ===== �O?N NG?N 97.5 =====
+      ;; ===== ĐOẠN NGẮN 97.5 =====
       (setq pStart (polar tam (+ goc pi) 1.25))
       (setq pEnd   (polar pStart (+ goc pi) 97.5))
       (command "_.LINE" pStart pEnd "")
       (setq entShort (entlast))
       (ssadd entShort ssNew)
 
-      ;; ===== COPY THEO BU?C 100 =====
+      ;; ===== COPY THEO BƯỚC 100 =====
       (setq i 1)
       (repeat n
         (setq pTo (polar t0 (+ goc pi) (* i 100.0)))
@@ -573,7 +633,7 @@
         (setq i (1+ i))
       )
 
-      ;; ===== �O?N K�O =====
+      ;; ===== ĐOẠN KÉO =====
       (setq d (/ (- len (* 100.0 2 n)) 2.0))
       (setq d (- d 1.25))
       (setq pLeft (polar tam (+ goc pi) (/ len 2.0)))
@@ -581,41 +641,42 @@
       (command "_.LINE" pLeft pIn "")
       (ssadd (entlast) ssNew)
 
-      ;; ===== XO� �O?N G?C =====
+      ;; ===== XOÁ ĐOẠN GỐC =====
       (entdel (car entLine))
 
-      ;; ===== MIRROR + JOIN =====
+      ;; ===== MIRROR =====
       (setq ssBefore ssNew)
+      (setq entBefore (entlast))
 
-      (command "_.MIRROR"
-               ssNew
-               ""
-               tam
-               (polar tam (+ goc (/ pi 2)) 10)
-               "_N"
+      (command
+        "_.MIRROR"
+        ssNew
+        ""
+        tam
+        (polar tam (+ goc (/ pi 2)) 10)
+        "_N"
       )
+      (setq ssMirrorNew (ssnewer entBefore))
+      (setq ssAll (ss-merge ssNew ssMirrorNew))
 
-      ;; xo� da gi�c m?u
+      ;; xoá đa giác mẫu
       (if (and entPoly (entget entPoly))
         (entdel entPoly)
       )
-
-      (setq ssAfter (ssget "_P"))
-      (setq ssAll (ss-merge ssBefore ssAfter))
-
-
-   
+      (if (and ssAll (> (sslength ssAll) 0))
+        (mirrorByVerticalLine ssAll)
+      )
 
 
-
-
-      ;; d?i layer d?ng lo?t
-      (command "_.CHPROP" ssAll "" "_LA" "_mss.bao" "")
     )
-    ;; ===== TR? L?I OSNAP =====
-  (setvar "OSMODE" 16383)
-  (princ)
   )
 
+  ;; ===== ĐỔI LAYER ĐỒNG LOẠT =====
+  (command "_.CHPROP" ssAll "" "_LA" "_mss.bao" "")
+
+  ;; ===== TRẢ LẠI OSNAP =====
+  (setvar "OSMODE" oldos)
+  (princ)
 )
+
 
