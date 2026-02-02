@@ -480,3 +480,142 @@
   (setvar "osmode" 16384)
   (princ)
 )
+
+
+;; ================== H�M G?P SELECTION SET ==================
+(defun ss-merge (ss1 ss2 / ss i)
+  (setq ss (ssadd))
+  (foreach s (list ss1 ss2)
+    (if s
+      (progn
+        (setq i 0)
+        (while (< i (sslength s))
+          (ssadd (ssname s i) ss)
+          (setq i (1+ i))
+        )
+      )
+    )
+  )
+  ss
+)
+
+;; ================== L?NH CH�NH ==================
+(defun c:DS
+  (
+   
+  )
+  (vl-load-com)
+  ;; ===== LUU & T?T OSNAP =====
+  (setq oldos (getvar "OSMODE"))
+  (setvar "OSMODE" 0)
+
+  ;; ===== T?O / SET LAYER =====
+  (if (not (tblsearch "LAYER" "_mss.bao"))
+    (command "_.LAYER" "_M" "_mss.bao" "")
+  )
+  (setvar "CLAYER" "_mss.bao")
+
+  ;; ===== CH?N �O?N TH?NG D�I =====
+  (setq entLine (entsel "\nChon doan thang dai: "))
+  (if (and entLine
+           (= "LINE" (cdr (assoc 0 (entget (car entLine))))))
+    (progn
+      (setq dataLine (entget (car entLine)))
+      (setq p1 (cdr (assoc 10 dataLine)))
+      (setq p2 (cdr (assoc 11 dataLine)))
+
+      ;; ===== TH�NG S? =====
+      (setq tam (mapcar '(lambda (a b) (/ (+ a b) 2.0)) p1 p2))
+      (setq goc (angle p1 p2))
+      (setq len (distance p1 p2))
+      (setq n   (fix (/ len 200.0)))
+
+      (setq ssNew (ssadd))
+
+      ;; ===== V? �A GI�C M?U =====
+      (setq t0 tam)
+      (setq t1 (polar t0 goc 1.25))
+      (setq t2 (polar t1 (+ goc (/ pi 2)) 1.0))
+      (setq t3 (polar t2 (+ goc pi) 2.5))
+      (setq t4 (polar t3 (+ goc (* 3 (/ pi 2))) 1.0))
+
+      (command "_.PLINE" t1 t2 t3 t4 "")
+      (setq entPoly (entlast))
+
+      (command "_.FILLET" "_R" 1)
+      (command "_.FILLET" "_P" entPoly)
+
+      (ssadd entPoly ssNew)
+
+      ;; ===== �O?N NG?N 97.5 =====
+      (setq pStart (polar tam (+ goc pi) 1.25))
+      (setq pEnd   (polar pStart (+ goc pi) 97.5))
+      (command "_.LINE" pStart pEnd "")
+      (setq entShort (entlast))
+      (ssadd entShort ssNew)
+
+      ;; ===== COPY THEO BU?C 100 =====
+      (setq i 1)
+      (repeat n
+        (setq pTo (polar t0 (+ goc pi) (* i 100.0)))
+
+        (command "_.COPY" entPoly "" t0 pTo)
+        (setq entNew (entlast))
+        (ssadd entNew ssNew)
+
+        (if (< i n)
+          (progn
+            (command "_.COPY" entShort "" t0 pTo)
+            (setq entNew (entlast))
+            (ssadd entNew ssNew)
+          )
+        )
+        (setq i (1+ i))
+      )
+
+      ;; ===== �O?N K�O =====
+      (setq d (/ (- len (* 100.0 2 n)) 2.0))
+      (setq d (- d 1.25))
+      (setq pLeft (polar tam (+ goc pi) (/ len 2.0)))
+      (setq pIn   (polar pLeft goc d))
+      (command "_.LINE" pLeft pIn "")
+      (ssadd (entlast) ssNew)
+
+      ;; ===== XO� �O?N G?C =====
+      (entdel (car entLine))
+
+      ;; ===== MIRROR + JOIN =====
+      (setq ssBefore ssNew)
+
+      (command "_.MIRROR"
+               ssNew
+               ""
+               tam
+               (polar tam (+ goc (/ pi 2)) 10)
+               "_N"
+      )
+
+      ;; xo� da gi�c m?u
+      (if (and entPoly (entget entPoly))
+        (entdel entPoly)
+      )
+
+      (setq ssAfter (ssget "_P"))
+      (setq ssAll (ss-merge ssBefore ssAfter))
+
+
+   
+
+
+
+
+      ;; d?i layer d?ng lo?t
+      (command "_.CHPROP" ssAll "" "_LA" "_mss.bao" "")
+    )
+    ;; ===== TR? L?I OSNAP =====
+  (setvar "OSMODE" 16383)
+  (princ)
+  )
+
+)
+
