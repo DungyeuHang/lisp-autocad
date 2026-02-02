@@ -646,7 +646,7 @@
 
       ;; ===== MIRROR =====
       (setq ssBefore ssNew)
-      (setq entBefore (entlast))
+      (setq entBefore (entlast)); phải lưu biến ent bằng enlast
 
       (command
         "_.MIRROR"
@@ -656,7 +656,7 @@
         (polar tam (+ goc (/ pi 2)) 10)
         "_N"
       )
-      (setq ssMirrorNew (ssnewer entBefore))
+      (setq ssMirrorNew (ssnewer entBefore)) ;gán nhóm đối tượng mới sau đó 
       (setq ssAll (ss-merge ssNew ssMirrorNew))
 
       ;; xoá đa giác mẫu
