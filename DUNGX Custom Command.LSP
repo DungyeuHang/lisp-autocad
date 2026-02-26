@@ -833,6 +833,8 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
       ;; ✅ vẽ và đánh số từng điểm
       (foreach pt ptList
+        (setvar "osmode" 16384)
+
         (command "CIRCLE" pt "0.3")
 
         (setq ptText (if (= (rem count 2) 1)
@@ -861,6 +863,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
         (setq allText (strcat allText defLine "\n"))
         (setq lastPt pt)
         (setq count (1+ count)))
+      (setvar "osmode" 16383)
 
       ;; ✅ chèn tổng hợp định nghĩa nếu có
       (if (> (strlen allText) 0)
