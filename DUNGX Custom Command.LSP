@@ -876,7 +876,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
       ;; ========================
       ;; ✅ Thêm Smart Shape Text
       ;; ========================
-      (setq textInsertPt (list (+ (car finalPt) 3) (- (cadr finalPt) 0)))
+      (setq textInsertPt (list (+ (car finalPt) 5) (- (cadr finalPt) 0)))
       (setq arcInfoStr "")
       (setq count 0)
       (while (< count (- (length ptList) 1))
