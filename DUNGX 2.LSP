@@ -680,3 +680,8 @@
 )
 
 
+;;;##########
+(defun c:del_a$ ()
+  (command "-purge" "B" "A$*" "N")
+  (princ)
+)
