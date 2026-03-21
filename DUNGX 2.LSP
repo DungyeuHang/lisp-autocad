@@ -416,16 +416,44 @@
 ;;;;;;;;;;;;;;;;;;; End of TKK ;;;;;;;;;;;;;;;;;;;
 
 
-(defun c:SAY_STRETCH_BY_DIM ( / dimNew dimOld valNew valOld delta d1 d2 doituong1)
+(defun get-dim-entity-repeat (msg / entPick entName)
+  (setq entName nil)
+  (while (null entName)
+    (setq entPick (entsel msg))
+    (cond
+      ((null entPick)
+       (prompt "\nBan chua chon doi tuong. Vui long chon lai DIM.")
+      )
+      ((/= "DIMENSION" (cdr (assoc 0 (entget (car entPick)))))
+       (prompt "\nDoi tuong vua chon khong phai DIM. Vui long chon lai.")
+      )
+      (T
+       (setq entName (car entPick))
+      )
+    )
+  )
+  entName
+)
+
+(defun c:SAY_STRETCH_BY_DIM ( / *error* oldos dimNew dimOld valNew valOld delta d1 d2 doituong1)
+  (defun *error* (msg)
+    (if oldos
+      (setvar "OSMODE" oldos)
+    )
+    (if (and msg
+             (not (wcmatch (strcase msg) "*BREAK,*CANCEL*,*EXIT*")))
+      (prompt (strcat "\nLoi: " msg))
+    )
+    (princ)
+  )
+
   (prompt "\n=== STRETCH THEO DIM NGANG ===")
 
   ;; DIM CẦN THÀNH
-  (setq dimNew (car (entsel "\nChọn DIM Doc cần thành: ")))
-  (if (not dimNew) (exit))
+  (setq dimNew (get-dim-entity-repeat "\nChon DIM Doc can thanh: "))
 
   ;; DIM BAN ĐẦU
-  (setq dimOld (car (entsel "\nChọn DIM Doc ban đầu: ")))
-  (if (not dimOld) (exit))
+  (setq dimOld (get-dim-entity-repeat "\nChon DIM Doc ban dau: "))
 
   ;; LẤY GIÁ TRỊ
   (setq valNew (cdr (assoc 42 (entget dimNew))))
@@ -436,6 +464,7 @@
   (prompt (strcat "\nDelta = " (rtos delta 2 2)))
 
   ;; USER QUÉT VÙNG STRETCH
+  (setq oldos (getvar "OSMODE"))
   (setvar "osmode" 16384)
   (setq d1 (list 0 0))
   (setq d2 (list 0  (+ 0 delta) ))
@@ -443,20 +472,29 @@
   (command "stretch" doituong1 "" d1 d2  "") ;(command "stretch" )
 
   (prompt "\n✔ STRETCH Doc XONG.")
-  (setvar "osmode" 16383)
+  (setvar "osmode" oldos)
   (princ)
 )
 
-(defun c:SAX_STRETCH_BY_DIM ( / dimNew dimOld valNew valOld delta d1 d2 doituong1 doituong2 d3)
+(defun c:SAX_STRETCH_BY_DIM ( / *error* oldos dimNew dimOld valNew valOld delta d1 d2 doituong1 doituong2 d3)
+  (defun *error* (msg)
+    (if oldos
+      (setvar "OSMODE" oldos)
+    )
+    (if (and msg
+             (not (wcmatch (strcase msg) "*BREAK,*CANCEL*,*EXIT*")))
+      (prompt (strcat "\nLoi: " msg))
+    )
+    (princ)
+  )
+
   (prompt "\n=== STRETCH THEO DIM ngang ===")
 
   ;; DIM CẦN THÀNH
-  (setq dimNew (car (entsel "\nChọn DIM ngang cần thành: ")))
-  (if (not dimNew) (exit))
+  (setq dimNew (get-dim-entity-repeat "\nChon DIM ngang can thanh: "))
 
   ;; DIM BAN ĐẦU
-  (setq dimOld (car (entsel "\nChọn DIM ngang ban đầu: ")))
-  (if (not dimOld) (exit))
+  (setq dimOld (get-dim-entity-repeat "\nChon DIM ngang ban dau: "))
 
   ;; LẤY GIÁ TRỊ
   (setq valNew (cdr (assoc 42 (entget dimNew))))
@@ -467,6 +505,7 @@
   (prompt (strcat "\nDelta = " (rtos delta 2 2)))
 
   ;; USER QUÉT VÙNG STRETCH
+  (setq oldos (getvar "OSMODE"))
   (setvar "osmode" 16384)
   (setq d1 (list 0 0))
   (setq d2 (list (- 0 delta)  0 ))
@@ -477,7 +516,7 @@
   (command "stretch" doituong2 "" d1 d3  "") ;(command "stretch" )
   
   (prompt "\n✔ STRETCH ngang XONG.")
-  (setvar "osmode" 16384)
+  (setvar "osmode" oldos)
   (princ)
 )
 
@@ -549,7 +588,9 @@
 (defun c:DCS
   (
     /
+    *error*
     oldos
+    entPick
     entLine dataLine p1 p2
     tam goc len n
     ssNew
@@ -564,6 +605,17 @@
     ssAll
   )
 
+  (defun *error* (msg)
+    (if oldos
+      (setvar "OSMODE" oldos)
+    )
+    (if (and msg
+             (not (wcmatch (strcase msg) "*BREAK,*CANCEL*,*EXIT*")))
+      (prompt (strcat "\nLoi: " msg))
+    )
+    (princ)
+  )
+
 
   ;; ===== LƯU & TẮT OSNAP =====
   (setq oldos (getvar "OSMODE"))
@@ -576,7 +628,21 @@
   (setvar "CLAYER" "_mss.bao")
 
   ;; ===== CHỌN ĐOẠN THẲNG DÀI =====
-  (setq entLine (entsel "\nChon doan thang dai: "))
+  (setq entLine nil)
+  (while (null entLine)
+    (setq entPick (entsel "\nChon doan thang dai: "))
+    (cond
+      ((null entPick)
+       (prompt "\nBan chua chon doi tuong. Vui long chon lai LINE.")
+      )
+      ((/= "LINE" (cdr (assoc 0 (entget (car entPick)))))
+       (prompt "\nDoi tuong vua chon khong phai LINE. Vui long chon lai.")
+      )
+      (T
+       (setq entLine entPick)
+      )
+    )
+  )
   (if (and entLine
            (= "LINE" (cdr (assoc 0 (entget (car entLine))))))
     (progn
@@ -684,4 +750,40 @@
 (defun c:del_a$ ()
   (command "-purge" "B" "A$*" "N")
   (princ)
+)
+
+;; Override: bat chon lai truc mirror den khi dung LINE
+(defun mirrorByVerticalLine (ss / entPick entLine data p1 p2 mid mirrorP1 mirrorP2)
+  (setq entLine nil)
+  (while (null entLine)
+    (setq entPick (entsel "\nChon LINE lam truc mirror (line dung): "))
+    (cond
+      ((null entPick)
+       (prompt "\nBan chua chon doi tuong. Vui long chon lai LINE.")
+      )
+      ((/= "LINE" (cdr (assoc 0 (entget (car entPick)))))
+       (prompt "\nDoi tuong vua chon khong phai LINE. Vui long chon lai.")
+      )
+      (T
+       (setq entLine (car entPick))
+      )
+    )
+  )
+
+  (setq data (entget entLine))
+  (setq p1 (cdr (assoc 10 data)))
+  (setq p2 (cdr (assoc 11 data)))
+
+  (setq mid
+    (list
+      (/ (+ (car p1) (car p2)) 2.0)
+      (/ (+ (cadr p1) (cadr p2)) 2.0)
+      0.0
+    )
+  )
+
+  (setq mirrorP1 mid)
+  (setq mirrorP2 (list (+ (car mid) 1.0) (cadr mid) 0.0))
+
+  (command "_.MIRROR" ss "" mirrorP1 mirrorP2 "_N")
 )
