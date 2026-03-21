@@ -115,7 +115,7 @@
   )
 )
 
-(defun c:CC ( / opt )
+(defun c:CC ( )
   (vl-load-com)
   (cc-copy-cleanup)
   (setq *cc-entlast* (entlast))
@@ -133,25 +133,11 @@
     )
   )
 
-  (initget "P")
-  (setq opt
-    (getkword
-      "\nChon doi tuong can copy hoac [P] de dung bien P <Quet>: "
-    )
-  )
-
-  (if (= opt "P")
-    (if (and p (= (type p) 'PICKSET) (> (sslength p) 0))
-      (sssetfirst nil p)
-      (progn
-        (prompt "\nBien P dang rong hoac khong hop le.")
-        (cc-copy-cleanup)
-      )
-    )
-  )
-
   (if *cc-copy-reactor*
-    (command "_.COPY")
+    (progn
+      (prompt "\nSelect objects: quet binh thuong hoac go !P de dung bien P.")
+      (command "_.COPY")
+    )
   )
   (princ)
 )
@@ -1839,7 +1825,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   )
 )
 
-(defun c:33 ( / opt )
+(defun c:33 ( )
   (vl-load-com)
   (m33-mirror-cleanup)
   (setq *m33-entlast* (entlast))
@@ -1859,25 +1845,11 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
     )
   )
 
-  (initget "P")
-  (setq opt
-    (getkword
-      "\nChon doi tuong can mirror hoac [P] de dung bien P <Quet>: "
-    )
-  )
-
-  (if (= opt "P")
-    (if (and p (= (type p) 'PICKSET) (> (sslength p) 0))
-      (sssetfirst nil p)
-      (progn
-        (prompt "\nBien P dang rong hoac khong hop le.")
-        (m33-mirror-cleanup)
-      )
-    )
-  )
-
   (if *m33-mirror-reactor*
-    (command "_.MIRROR")
+    (progn
+      (prompt "\nSelect objects: quet binh thuong hoac go !P de dung bien P.")
+      (command "_.MIRROR")
+    )
   )
   (princ)
 )
