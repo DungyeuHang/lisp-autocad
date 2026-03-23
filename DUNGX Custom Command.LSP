@@ -1180,67 +1180,6 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
 
 
-;START ............................... COPY TO MANY MID POINT OF 2 LINES ..................................... =========>;
-(defun c:CMMM (/ ss basePt done line1 line2 p1a p1b p2a p2b mid1 mid2 destPt vlaLine1 vlaLine2)
-  (vl-load-com)
-
-  (prompt "\nChọn các đối tượng cần copy: ")
-  (setq ss (ssget))
-
-  (if ss
-    (progn
-      (prompt "\nChọn điểm gốc để copy: ")
-      (setq basePt (getpoint))
-
-      (setq done nil)
-
-      (while (not done)
-        (prompt "\n--- Chọn cặp LINE mới (Enter để thoát) ---")
-
-        ;; Chọn LINE thứ nhất
-        (setq line1 (car (entsel "\nChọn LINE thứ nhất: ")))
-
-        ;; Nếu không chọn gì thì thoát vòng lặp
-        (if (not line1)
-          (setq done T)
-          (progn
-            ;; Chọn LINE thứ hai
-            (setq line2 (car (entsel "\nChọn LINE thứ hai: ")))
-
-            (if (and line1 line2)
-              (progn
-                ;; Lấy object VLA
-                (setq vlaLine1 (vlax-ename->vla-object line1))
-                (setq vlaLine2 (vlax-ename->vla-object line2))
-
-                ;; Tính midpoint của LINE 1
-                (setq p1a (vlax-curve-getStartPoint vlaLine1))
-                (setq p1b (vlax-curve-getEndPoint vlaLine1))
-                (setq mid1 (mapcar '(lambda (a b) (/ (+ a b) 2.0)) p1a p1b))
-
-                ;; Tính midpoint của LINE 2
-                (setq p2a (vlax-curve-getStartPoint vlaLine2))
-                (setq p2b (vlax-curve-getEndPoint vlaLine2))
-                (setq mid2 (mapcar '(lambda (a b) (/ (+ a b) 2.0)) p2a p2b))
-
-                ;; Tính điểm đến (mid của mid1 và mid2)
-                (setq destPt (mapcar '(lambda (a b) (/ (+ a b) 2.0)) mid1 mid2))
-
-                ;; COPY đối tượng
-                (command "_COPY" ss "" basePt destPt)
-              )
-              (prompt "\nCần chọn đủ 2 LINE!")
-            )
-          )
-        )
-      )
-    )
-    (prompt "\nKhông có đối tượng nào được chọn.")
-  )
-  (princ)
-)
-;<=============.............................. COPY TO MANY MID POINT OF 2 LINES ......................................... END;
-
 
 
 ;START ............................... UN-FILLET ..................................... =========>;
@@ -1851,5 +1790,170 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
       (command "_.MIRROR")
     )
   )
+  (princ)
+)
+
+(defun cmmm-line-p (ent / typ)
+  (and ent
+       (setq typ (cdr (assoc 0 (entget ent))))
+       (member typ '("LINE" "LWPOLYLINE" "POLYLINE")))
+)
+
+(defun cmmm-select-line (msg allowExit allowCustomBase / pick ent ok)
+  (setq ok nil)
+  (while (not ok)
+    (if allowCustomBase
+      (initget "C")
+    )
+    (setq pick (entsel msg))
+    (cond
+      ((and allowCustomBase
+            (= (type pick) 'STR)
+            (= (strcase pick) "C"))
+       (setq ent 'CMMM-CUSTOM-BASE)
+       (setq ok T)
+      )
+      ((null pick)
+       (if allowExit
+         (setq ok 'exit)
+         (prompt "\nBan chua chon doi tuong. Vui long chon lai LINE/PLINE.")
+       )
+      )
+      ((not (cmmm-line-p (car pick)))
+       (prompt "\nDoi tuong vua chon khong phai LINE/PLINE. Vui long chon lai.")
+      )
+      (T
+       (setq ent (car pick))
+       (setq ok T)
+      )
+    )
+  )
+  (if (= ok 'exit) nil ent)
+)
+
+(defun cmmm-get-selection-center (ss / idx ent obj minVar maxVar curMin curMax allMin allMax)
+  (setq idx 0)
+  (while (< idx (sslength ss))
+    (setq ent (ssname ss idx))
+    (if (/= "DIMENSION" (cdr (assoc 0 (entget ent))))
+      (progn
+        (setq obj (vlax-ename->vla-object ent))
+        (if (vlax-method-applicable-p obj 'GetBoundingBox)
+          (progn
+            (vla-getBoundingBox obj 'minVar 'maxVar)
+            (setq curMin (vlax-safearray->list minVar))
+            (setq curMax (vlax-safearray->list maxVar))
+            (if allMin
+              (progn
+                (setq allMin
+                  (list
+                    (min (car allMin) (car curMin))
+                    (min (cadr allMin) (cadr curMin))
+                    (min (caddr allMin) (caddr curMin))
+                  )
+                )
+                (setq allMax
+                  (list
+                    (max (car allMax) (car curMax))
+                    (max (cadr allMax) (cadr curMax))
+                    (max (caddr allMax) (caddr curMax))
+                  )
+                )
+              )
+              (progn
+                (setq allMin curMin)
+                (setq allMax curMax)
+              )
+            )
+          )
+        )
+      )
+    )
+    (setq idx (1+ idx))
+  )
+  (if allMin
+    (mapcar '(lambda (a b) (/ (+ a b) 2.0)) allMin allMax)
+    nil
+  )
+)
+
+(defun c:CMMM (/ *error* oldos ss basePt newBasePt done line1 line2 p1a p1b p2a p2b mid1 mid2 destPt vlaLine1 vlaLine2)
+  (vl-load-com)
+
+  (defun *error* (msg)
+    (if oldos
+      (setvar "OSMODE" oldos)
+    )
+    (if (and msg
+             (not (wcmatch (strcase msg) "*BREAK,*CANCEL*,*EXIT*")))
+      (prompt (strcat "\nLoi: " msg))
+    )
+    (princ)
+  )
+
+  (setq oldos (getvar "OSMODE"))
+
+  (prompt "\nChon cac doi tuong can copy: ")
+  (setq ss (ssget))
+
+  (if ss
+    (progn
+      (setvar "OSMODE" 0)
+      (setq basePt (cmmm-get-selection-center ss))
+      (if basePt
+        (prompt "\nMac dinh dung tam nhom lam diem goc. Neu muon doi, go C tai buoc chon LINE/PLINE thu nhat.")
+        (progn
+          (prompt "\nKhong tinh duoc tam nhom. Vui long chon diem goc.")
+          (setq basePt (getpoint "\nChon diem goc de copy: "))
+        )
+      )
+
+      (if basePt
+        (progn
+          (setq done nil)
+
+          (while (not done)
+            (prompt "\n--- Chon cap LINE moi (Enter de thoat) ---")
+            (setq line1 (cmmm-select-line "\nChon LINE/PLINE thu nhat hoac [C] de doi diem goc: " T T))
+
+            (if (not line1)
+              (setq done T)
+              (progn
+                (if (= line1 'CMMM-CUSTOM-BASE)
+                  (progn
+                    (setq newBasePt (getpoint "\nChon diem goc de copy: "))
+                    (if newBasePt
+                      (setq basePt newBasePt)
+                      (prompt "\nKhong chon diem goc. Giu nguyen diem goc hien tai.")
+                    )
+                  )
+                  (progn
+                    (setq line2 (cmmm-select-line "\nChon LINE/PLINE thu hai: " nil nil))
+
+                    (setq vlaLine1 (vlax-ename->vla-object line1))
+                    (setq vlaLine2 (vlax-ename->vla-object line2))
+
+                    (setq p1a (vlax-curve-getStartPoint vlaLine1))
+                    (setq p1b (vlax-curve-getEndPoint vlaLine1))
+                    (setq mid1 (mapcar '(lambda (a b) (/ (+ a b) 2.0)) p1a p1b))
+
+                    (setq p2a (vlax-curve-getStartPoint vlaLine2))
+                    (setq p2b (vlax-curve-getEndPoint vlaLine2))
+                    (setq mid2 (mapcar '(lambda (a b) (/ (+ a b) 2.0)) p2a p2b))
+
+                    (setq destPt (mapcar '(lambda (a b) (/ (+ a b) 2.0)) mid1 mid2))
+
+                    (command "_COPY" ss "" basePt destPt)
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    (prompt "\nKhong co doi tuong nao duoc chon.")
+  )
+  (setvar "OSMODE" oldos)
   (princ)
 )
