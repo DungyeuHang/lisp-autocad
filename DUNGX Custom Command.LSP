@@ -43,12 +43,6 @@
   (setvar "osmode" 16383)
 (command "mocoro"))
 
-;lệnh mirror -33
-;(defun c:33 ()
-  ;(command "osmode" 16383)
-  ;(prompt "\n🚀 Đang xử lý...")
-  ;(setvar "osmode" 16383)
-  ;(command "mirror"))
 
 ;lệnh matchprop -44
 (defun c:44 ()
