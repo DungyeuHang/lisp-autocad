@@ -38,7 +38,7 @@
     (command "layoff"))
 
 ;lệnh mocoro -11
-(defun c:11 ()
+(defun c:55 ()
   ;(command "osmode" 16383)
   (setvar "osmode" 16383)
 (command "mocoro"))
