@@ -382,7 +382,7 @@
 
 
 ;       <<<<<<<< full osmode -SS >>>>>>>          ;
-( defun c:ss()
+( defun c:SSS_FULL_OS_MODE()
  ;(command "osmode" "16383")
   (setvar "osmode" 16383)
   (princ)
