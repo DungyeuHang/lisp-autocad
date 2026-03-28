@@ -1627,7 +1627,7 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
                     plEnt plObj )
 
   (vl-load-com)
-
+  (setvar "OSMODE" 16384)
   ;; ============================
   ;; QUÉT ĐỐI TƯỢNG ĐO (BLOCK HOẶC CỤM)
   (prompt "\nQuét đối tượng cần đo (Block hoặc cụm đối tượng): ")
@@ -1691,7 +1691,8 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   (setq ptPl  (list plXmax blkYmin 0))
   (setq dimPos (list (+ plXmax 120) dimYAbove 0))
   (command "_.DIMLINEAR" ptBlk ptPl dimPos "")
-
+  
+  (setvar "OSMODE" 16383)
   (princ "\n✔ DIM xong – tự nhận dạng Block / Cụm đối tượng.")
   (princ)
 )
