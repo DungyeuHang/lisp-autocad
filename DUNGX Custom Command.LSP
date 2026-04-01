@@ -1893,3 +1893,14 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   (setvar "OSMODE" oldos)
   (princ)
 )
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun c:UM-UNDO-MARK ()
+  (command "_.undo" "_mark")
+  (princ)
+)
+
+(defun c:UB-UNDO-BACK ()
+  (command "_.undo" "_back")
+  (princ)
+)
