@@ -72,8 +72,8 @@
     (command "find"))
 
 ;lệnh COPY-CC
-(defun c:cc ()
-    (command "copy"))
+;(defun c:cc ()
+    ;(command "copy" ))
 
 ;lệnh mirror-33
 (defun c:33 ()
