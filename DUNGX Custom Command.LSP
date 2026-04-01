@@ -392,10 +392,113 @@
 ;;;;;;;;;;; end of OOO ;;;;;;;;;
 
 ;         <<<<< set last -LL >>>>
-;(defun c:ll ()
-;  (setq l (getreal "nhap so can set cho L"))
-;  (setq k (/ l 2))
-; )
+(defun ll-ssnewer (ent / ss e)
+  (setq e (if ent (entnext ent) (entnext)))
+  (while e
+    (if (null ss)
+      (setq ss (ssadd))
+    )
+    (setq ss (ssadd e ss))
+    (setq e (entnext e))
+  )
+  ss
+)
+
+(defun ll-ignore-command-p (cmd / up)
+  (setq up (strcase cmd))
+  (or (= up "LL")
+      (= up "LLON")
+      (= up "LLOFF"))
+)
+
+(defun ll-reactor-start (reactor params / cmd)
+  (setq cmd (car params))
+  (if (not (ll-ignore-command-p cmd))
+    (setq *ll-marker-stack* (cons (entlast) *ll-marker-stack*))
+  )
+)
+
+(defun ll-reactor-ended (reactor params / cmd marker ss)
+  (setq cmd (car params))
+  (if (not (ll-ignore-command-p cmd))
+    (progn
+      (setq marker (car *ll-marker-stack*))
+      (setq *ll-marker-stack* (cdr *ll-marker-stack*))
+      (setq ss (ll-ssnewer marker))
+      (setq *ll-last-batch* ss)
+      (setq *ll-last-command* (strcase cmd))
+    )
+  )
+)
+
+(defun ll-reactor-cancelled (reactor params / cmd)
+  (setq cmd (car params))
+  (if (not (ll-ignore-command-p cmd))
+    (progn
+      (if *ll-marker-stack*
+        (setq *ll-marker-stack* (cdr *ll-marker-stack*))
+      )
+      (setq *ll-last-batch* nil)
+      (setq *ll-last-command* (strcase cmd))
+    )
+  )
+)
+
+(defun ll-ensure-reactor ( )
+  (if (or (null *ll-reactor*)
+          (not (vlr-added-p *ll-reactor*)))
+    (setq *ll-reactor*
+      (vlr-command-reactor
+        nil
+        '(
+          (:vlr-commandWillStart . ll-reactor-start)
+          (:vlr-commandEnded . ll-reactor-ended)
+          (:vlr-commandCancelled . ll-reactor-cancelled)
+          (:vlr-commandFailed . ll-reactor-cancelled)
+        )
+      )
+    )
+  )
+  *ll-reactor*
+)
+
+(defun c:LL ( / )
+  (ll-ensure-reactor)
+  (setq l *ll-last-batch*)
+  (if (and l (> (sslength l) 0))
+    (progn
+      (sssetfirst nil l)
+      (prompt
+        (strcat
+          "\nDa luu "
+          (itoa (sslength l))
+          " doi tuong moi cua lenh "
+          (if *ll-last-command* *ll-last-command* "?")
+          " vao bien L. Go !L de dung lai."
+        )
+      )
+    )
+    (prompt "\nKhong tim thay batch doi tuong moi cua lenh gan nhat.")
+  )
+  (princ)
+)
+
+(defun c:LLON ( / )
+  (ll-ensure-reactor)
+  (prompt "\nLL tracking da bat.")
+  (princ)
+)
+
+(defun c:LLOFF ( / )
+  (if (and *ll-reactor* (vlr-added-p *ll-reactor*))
+    (vlr-remove *ll-reactor*)
+  )
+  (setq *ll-reactor* nil)
+  (prompt "\nLL tracking da tat.")
+  (princ)
+)
+
+(ll-ensure-reactor)
 ;;;;;;;; end of LL ;;;;;;
 
 
