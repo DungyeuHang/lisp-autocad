@@ -71,6 +71,14 @@
 (defun c:f1 ()
     (command "find"))
 
+;lệnh COPY-CC
+(defun c:cc ()
+    (command "copy"))
+
+;lệnh mirror-33
+(defun c:33 ()
+    (command "mirror"))
+
 ;lệnh dimspace -dss
 (defun c:dss ()
     (command "dimspace"))
