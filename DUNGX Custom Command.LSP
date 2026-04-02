@@ -462,7 +462,7 @@
   *ll-reactor*
 )
 
-(defun c:LL ( / )
+(defun c:WW-SET-LAST ( / )
   (ll-ensure-reactor)
   (setq l *ll-last-batch*)
   (if (and l (> (sslength l) 0))
