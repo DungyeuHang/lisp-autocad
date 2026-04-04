@@ -1893,6 +1893,101 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   (setvar "OSMODE" oldos)
   (princ)
 )
+
+(defun c:sdd-smart-dim-o2p ( / *error* oldos selectionSet plSet bbox
+                    blkMin blkMax plMin plMax
+                    blkXmin blkXmax blkYmin blkYmax
+                    plXmin  plXmax  plYmin  plYmax
+                    dimXInside dimYAbove
+                    ptBlk ptPl dimPos
+                    idx plEnt plObj )
+
+  (vl-load-com)
+
+  (defun *error* (msg)
+    (if oldos
+      (setvar "OSMODE" oldos)
+    )
+    (if (and msg
+             (not (wcmatch (strcase msg) "*BREAK,*CANCEL*,*EXIT*")))
+      (prompt (strcat "\nLoi: " msg))
+    )
+    (princ)
+  )
+
+  (setq oldos (getvar "OSMODE"))
+  (setvar "OSMODE" 16384)
+
+  (prompt "\nQuet doi tuong can do (Block hoac cum doi tuong): ")
+  (setq selectionSet (ssget))
+  (if (null selectionSet)
+    (progn
+      (setvar "OSMODE" oldos)
+      (exit)
+    )
+  )
+
+  (setq bbox (get-selection-bbox selectionSet))
+  (setq blkMin (car bbox))
+  (setq blkMax (cadr bbox))
+
+  (setq blkXmin (car blkMin)
+        blkYmin (cadr blkMin)
+        blkXmax (car blkMax)
+        blkYmax (cadr blkMax))
+
+  (prompt "\nQuet 1 hoac nhieu POLYLINE: ")
+  (setq plSet (ssget '((0 . "LWPOLYLINE,POLYLINE"))))
+  (if (null plSet)
+    (progn
+      (setvar "OSMODE" oldos)
+      (exit)
+    )
+  )
+
+  (setq idx 0)
+  (while (< idx (sslength plSet))
+    (setq plEnt (ssname plSet idx))
+    (setq plObj (vlax-ename->vla-object plEnt))
+    (vla-getBoundingBox plObj 'plMin 'plMax)
+    (setq plMin (vlax-safearray->list plMin))
+    (setq plMax (vlax-safearray->list plMax))
+
+    (setq plXmin (car plMin)
+          plYmin (cadr plMin)
+          plXmax (car plMax)
+          plYmax (cadr plMax))
+
+    (setq dimXInside (- plXmin 200))
+    (setq dimYAbove  (+ plYmax 200))
+
+    (setq ptBlk (list blkXmin blkYmax 0))
+    (setq ptPl  (list blkXmin plYmax 0))
+    (setq dimPos (list dimXInside (+ plYmax 120) 0))
+    (command "_.DIMLINEAR" ptBlk ptPl dimPos "")
+
+    (setq ptBlk (list blkXmin blkYmin 0))
+    (setq ptPl  (list blkXmin plYmin 0))
+    (setq dimPos (list dimXInside (- plYmin 120) 0))
+    (command "_.DIMLINEAR" ptBlk ptPl dimPos "")
+
+    (setq ptBlk (list blkXmin blkYmin 0))
+    (setq ptPl  (list plXmin blkYmin 0))
+    (setq dimPos (list (- plXmin 120) dimYAbove 0))
+    (command "_.DIMLINEAR" ptBlk ptPl dimPos "")
+
+    (setq ptBlk (list blkXmax blkYmin 0))
+    (setq ptPl  (list plXmax blkYmin 0))
+    (setq dimPos (list (+ plXmax 120) dimYAbove 0))
+    (command "_.DIMLINEAR" ptBlk ptPl dimPos "")
+
+    (setq idx (1+ idx))
+  )
+
+  (setvar "OSMODE" oldos)
+  (princ "\nDim xong cho cac POLYLINE da quet.")
+  (princ)
+)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun c:UM-UNDO-MARK ()
