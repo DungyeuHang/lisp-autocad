@@ -1999,3 +1999,90 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   (command "_.undo" "_back")
   (princ)
 )
+
+(defun dx-layer-set-on (lay onFlag /)
+  (if (tblsearch "LAYER" lay)
+    (progn
+      (vl-load-com)
+      (vla-put-LayerOn
+        (vla-Item
+          (vla-get-Layers (vla-get-ActiveDocument (vlax-get-acad-object)))
+          lay
+        )
+        (if onFlag :vlax-true :vlax-false)
+      )
+      T
+    )
+    nil
+  )
+)
+
+(defun cccat-cleanup ( / )
+  (if *cccat-reactor*
+    (progn
+      (vlr-remove *cccat-reactor*)
+      (setq *cccat-reactor* nil)
+    )
+  )
+  (if *cccat-layer*
+    (dx-layer-set-on *cccat-layer* T)
+  )
+  (if (and *cccat-old-layer*
+           (tblsearch "LAYER" *cccat-old-layer*))
+    (setvar "CLAYER" *cccat-old-layer*)
+  )
+  (setq *cccat-layer* nil)
+  (setq *cccat-old-layer* nil)
+)
+
+(defun cccat-command-ended (reactor params / cmd)
+  (setq cmd (car params))
+  (if (wcmatch (strcase cmd) "*CCC_SMART_COPY_TO_CENTER*")
+    (cccat-cleanup)
+  )
+)
+
+(defun cccat-command-cancelled (reactor params / cmd)
+  (setq cmd (car params))
+  (if (wcmatch (strcase cmd) "*CCC_SMART_COPY_TO_CENTER*")
+    (cccat-cleanup)
+  )
+)
+
+(defun c:C3-COPY-KINH ( / *error* )
+  (vl-load-com)
+
+  (defun *error* (msg)
+    (cccat-cleanup)
+    (if (and msg
+             (not (wcmatch (strcase msg) "*BREAK,*CANCEL*,*EXIT*")))
+      (prompt (strcat "\nLoi: " msg))
+    )
+    (princ)
+  )
+
+  (cccat-cleanup)
+  (setq *cccat-layer* "_mss.cat")
+  (setq *cccat-old-layer* (getvar "CLAYER"))
+
+  (if (and (= (strcase *cccat-old-layer*) (strcase *cccat-layer*))
+           (tblsearch "LAYER" "0"))
+    (setvar "CLAYER" "0")
+  )
+
+  (dx-layer-set-on *cccat-layer* nil)
+
+  (setq *cccat-reactor*
+    (vlr-command-reactor
+      nil
+      '(
+        (:vlr-commandEnded . cccat-command-ended)
+        (:vlr-commandCancelled . cccat-command-cancelled)
+        (:vlr-commandFailed . cccat-command-cancelled)
+      )
+    )
+  )
+
+  (command "CCC_SMART_COPY_TO_CENTER")
+  (princ)
+)
