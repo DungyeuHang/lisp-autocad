@@ -179,128 +179,6 @@
 )
 
 
-;; ---------------------------------------------------------
-;; MAIN COMMAND
-(defun c:DUNGX (/ selection-set frame-list frame
-                  entity max-point
-                  insert-point date-point number-point
-                  current-time date-string year month day formatted-date
-                  offset-x offset-y counter)
-
-  (prompt "\n🚀 DUNGX: Auto insert SIGNATURE theo khung in...")
-
-  ;; ================= CONFIG =================
-  (setq offset-x 330)  ;; thụt trái
-  (setq offset-y 100)  ;; thụt xuống
-  ;; ==========================================
-
-  (setvar "OSMODE" 0)
-  (setvar "CLAYER" "_mss.phantom")
-
-  ;; Check block SIGNATURE
-  (if (not (tblsearch "BLOCK" "SIGNATURE"))
-    (progn
-      (princ "\n❌ Không tìm thấy block SIGNATURE.")
-      (exit)
-    )
-  )
-
-  ;; Get frame polylines
-  (setq selection-set
-        (ssget "X"
-          '(
-            (0 . "LWPOLYLINE")
-            (8 . "_mss.in")
-          )
-        )
-  )
-
-  (if (not selection-set)
-    (progn
-      (princ "\n⚠️ Không tìm thấy polyline layer _mss.in.")
-      (exit)
-    )
-  )
-
-  ;; Sort frames
-  (setq frame-list (sort-frames-left-to-right selection-set))
-
-
-  ;; Get system date
-  (setq current-time (getvar "CDATE"))
-  (setq date-string (substr (rtos current-time 2 6) 1 8))
-  (setq year  (substr date-string 1 4))
-  (setq month (substr date-string 5 2))
-  (setq day   (substr date-string 7 2))
-  (setq formatted-date (strcat day "/" month "/" year))
-
-  (setq counter 1)
-
-  ;; Insert loop
-  (foreach frame frame-list
-    (setq entity (cdr frame))
-
-
-    (vla-getBoundingBox
-      (vlax-ename->vla-object entity)
-      'min-point
-      'max-point
-    )
-
-    (setq max-point (vlax-safearray->list max-point))
-
-    ;; Insert point (top-right, offset inward)
-    (setq insert-point
-          (list
-            (- (car max-point) offset-x)
-            (- (cadr max-point) offset-y)
-            0
-          )
-    )
-
-    ;; Insert block
-    (command "_.-INSERT" "SIGNATURE" insert-point "" "")
-
-    ;; Text positions
-    (setq date-point
-          (list
-            (- (car insert-point) 200)
-            (- (cadr insert-point) 150)
-            0
-          )
-    )
-
-    (setq number-point
-          (list
-            (- (car insert-point) 100)
-            (- (cadr insert-point) 250)
-            0
-          )
-    )
-
-    ;; Create texts
-    (create-text date-point formatted-date 55 "_mss.phantom")
-    (create-text number-point (strcat "NO." (itoa counter)) 55 "_mss.phantom")
-
-    (setq counter (1+ counter))
-  )
-
-  (setvar "OSMODE" 16383)
-  (setvar "CLAYER" "_mss.kichthuoc")
-
-  (prompt
-    (strcat
-      "\n✅ HOÀN THÀNH: "
-      (itoa (1- counter))
-      " khung đã được đánh số (TRÁI → PHẢI)."
-    )
-  )
-  (princ)
-)
-
-
-;;;;;;;;;;;;;;;;;;;;  end of DUNGX  ;;;;;;;;;;;;;
-
 
 
 ;       <<<<<<<< full osmode -SS >>>>>>>          ;
@@ -2084,5 +1962,271 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   )
 
   (command "CCC_SMART_COPY_TO_CENTER")
+  (princ)
+)
+
+;;;;;;;;;;;;;;;; END OF CCC
+
+
+
+
+(defun dungx-eq (a b /)
+  (< (abs (- a b)) 1e-8)
+)
+
+(defun dungx-dot2d (v1 v2 /)
+  (+ (* (car v1) (car v2))
+     (* (cadr v1) (cadr v2)))
+)
+
+(defun dungx-cross2d (v1 v2 /)
+  (- (* (car v1) (cadr v2))
+     (* (cadr v1) (car v2)))
+)
+
+(defun dungx-vsub2d (p1 p2 /)
+  (list (- (car p1) (car p2))
+        (- (cadr p1) (cadr p2))
+        0.0)
+)
+
+(defun dungx-zero-vec-p (v /)
+  (and (dungx-eq (car v) 0.0)
+       (dungx-eq (cadr v) 0.0))
+)
+
+(defun dungx-collinear-pt-p (pPrev pCur pNext / v1 v2)
+  (setq v1 (dungx-vsub2d pCur pPrev))
+  (setq v2 (dungx-vsub2d pNext pCur))
+  (dungx-eq (dungx-cross2d v1 v2) 0.0)
+)
+
+(defun dungx-simplify-rect-pts (pts / changed res i pPrev pCur pNext)
+  (setq changed T)
+  (while changed
+    (setq changed nil)
+    (setq res nil)
+    (setq i 0)
+    (while (< i (length pts))
+      (setq pPrev (nth (rem (+ i (1- (length pts))) (length pts)) pts))
+      (setq pCur  (nth i pts))
+      (setq pNext (nth (rem (1+ i) (length pts)) pts))
+      (if (and (> (length pts) 4)
+               (dungx-collinear-pt-p pPrev pCur pNext))
+        (setq changed T)
+        (setq res (append res (list pCur)))
+      )
+      (setq i (1+ i))
+    )
+    (setq pts res)
+  )
+  pts
+)
+
+(defun dungx-rect-frame-p (ent / obj coords pts i pt e1 e2 e3 e4)
+  (and ent
+       (= "LWPOLYLINE" (cdr (assoc 0 (entget ent))))
+       (setq obj (vlax-ename->vla-object ent))
+       (setq coords (vlax-get obj 'Coordinates))
+       (>= (length coords) 8)
+       (= 0 (rem (length coords) 2))
+       (progn
+         (setq pts nil
+               i 0)
+
+         (while (< i (/ (length coords) 2))
+            (setq pt (list (nth (* i 2) coords) (nth (1+ (* i 2)) coords) 0.0))
+            (setq pts (append pts (list pt)))
+            (if (not (dungx-eq (vla-GetBulge obj i) 0.0))
+              (setq pts nil i (/ (length coords) 2))
+            )
+            (setq i (1+ i))
+          )
+
+         (if pts
+           (progn
+             (setq pts (dungx-simplify-rect-pts pts))
+             (if (= (length pts) 4)
+               (progn
+                 (setq e1 (dungx-vsub2d (nth 1 pts) (nth 0 pts)))
+                 (setq e2 (dungx-vsub2d (nth 2 pts) (nth 1 pts)))
+                 (setq e3 (dungx-vsub2d (nth 3 pts) (nth 2 pts)))
+                 (setq e4 (dungx-vsub2d (nth 0 pts) (nth 3 pts)))
+                 (and
+                   (not (dungx-zero-vec-p e1))
+                   (not (dungx-zero-vec-p e2))
+                   (not (dungx-zero-vec-p e3))
+                   (not (dungx-zero-vec-p e4))
+                   (dungx-eq (dungx-dot2d e1 e2) 0.0)
+                   (dungx-eq (dungx-dot2d e2 e3) 0.0)
+                   (dungx-eq (dungx-cross2d e1 e3) 0.0)
+                   (dungx-eq (dungx-cross2d e2 e4) 0.0)
+                 )
+               )
+               nil
+             )
+           )
+           nil
+         )
+       )
+  )
+)
+
+(defun dungx-filter-rect-frames (ss / out idx ent)
+  (setq idx 0)
+  (while (< idx (sslength ss))
+    (setq ent (ssname ss idx))
+    (if (dungx-rect-frame-p ent)
+      (progn
+        (if (null out)
+          (setq out (ssadd))
+        )
+        (ssadd ent out)
+      )
+    )
+    (setq idx (1+ idx))
+  )
+  out
+)
+
+(defun dungx-filter-frame-like-plines (ss / out idx ent obj minpt maxpt pmin pmax)
+  (setq idx 0)
+  (while (< idx (sslength ss))
+    (setq ent (ssname ss idx))
+    (setq obj (vlax-ename->vla-object ent))
+    (vla-getBoundingBox obj 'minpt 'maxpt)
+    (setq pmin (vlax-safearray->list minpt))
+    (setq pmax (vlax-safearray->list maxpt))
+    (if (and (> (abs (- (car pmax) (car pmin))) 1e-8)
+             (> (abs (- (cadr pmax) (cadr pmin))) 1e-8))
+      (progn
+        (if (null out)
+          (setq out (ssadd))
+        )
+        (ssadd ent out)
+      )
+    )
+    (setq idx (1+ idx))
+  )
+  out
+)
+
+(defun c:DUNGX (/ selection-set frame-list frame
+                  entity max-point
+                  insert-point date-point number-point
+                  current-time date-string year month day formatted-date
+                  offset-x offset-y counter)
+
+  (prompt "\n🚀 DUNGX: Auto insert SIGNATURE theo khung in...")
+
+  ;; ================= CONFIG =================
+  (setq offset-x 330)  ;; thụt trái
+  (setq offset-y 100)  ;; thụt xuống
+  ;; ==========================================
+
+  (setvar "OSMODE" 0)
+  (setvar "CLAYER" "_mss.phantom")
+
+  ;; Check block SIGNATURE
+  (if (not (tblsearch "BLOCK" "SIGNATURE"))
+    (progn
+      (princ "\n❌ Không tìm thấy block SIGNATURE.")
+      (exit)
+    )
+  )
+
+  ;; Get frame polylines
+  (setq selection-set
+        (ssget "X"
+          '(
+            (0 . "LWPOLYLINE")
+            (8 . "_mss.in")
+          )
+        )
+  )
+  (if selection-set
+    (setq selection-set (dungx-filter-frame-like-plines selection-set))
+  )
+
+  (if (not selection-set)
+    (progn
+      (princ "\n⚠️ Không tìm thấy frame polyline hợp lệ trên layer _mss.in.")
+      (exit)
+    )
+  )
+
+  ;; Sort frames
+  (setq frame-list (sort-frames-left-to-right selection-set))
+
+
+  ;; Get system date
+  (setq current-time (getvar "CDATE"))
+  (setq date-string (substr (rtos current-time 2 6) 1 8))
+  (setq year  (substr date-string 1 4))
+  (setq month (substr date-string 5 2))
+  (setq day   (substr date-string 7 2))
+  (setq formatted-date (strcat day "/" month "/" year))
+
+  (setq counter 1)
+
+  ;; Insert loop
+  (foreach frame frame-list
+    (setq entity (cdr frame))
+
+
+    (vla-getBoundingBox
+      (vlax-ename->vla-object entity)
+      'min-point
+      'max-point
+    )
+
+    (setq max-point (vlax-safearray->list max-point))
+
+    ;; Insert point (top-right, offset inward)
+    (setq insert-point
+          (list
+            (- (car max-point) offset-x)
+            (- (cadr max-point) offset-y)
+            0
+          )
+    )
+
+    ;; Insert block
+    (command "_.-INSERT" "SIGNATURE" insert-point "" "")
+
+    ;; Text positions
+    (setq date-point
+          (list
+            (- (car insert-point) 200)
+            (- (cadr insert-point) 150)
+            0
+          )
+    )
+
+    (setq number-point
+          (list
+            (- (car insert-point) 100)
+            (- (cadr insert-point) 250)
+            0
+          )
+    )
+
+    ;; Create texts
+    (create-text date-point formatted-date 55 "_mss.phantom")
+    (create-text number-point (strcat "NO." (itoa counter)) 55 "_mss.phantom")
+
+    (setq counter (1+ counter))
+  )
+
+  (setvar "OSMODE" 16383)
+  (setvar "CLAYER" "_mss.kichthuoc")
+
+  (prompt
+    (strcat
+      "\n✅ HOÀN THÀNH: "
+      (itoa (1- counter))
+      " khung đã được đánh số (TRÁI → PHẢI)."
+    )
+  )
   (princ)
 )
