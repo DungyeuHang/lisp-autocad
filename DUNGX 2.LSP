@@ -334,7 +334,7 @@
   (setq newLockCenterX (getreal "\nNhap X tam khoa moi: "))
   (setq offsetDistance (- newLockCenterX 45))
 
-  (setq moveUpperHoleVector (list 0 (- (- offsetDistance 1)) 0))
+  (setq moveUpperHoleVector (list 0 (- (- offsetDistance 0)) 0)) ;UPPER HOLE
   (setq moveLowerHoleVector (list 0 (- offsetDistance) 0))
 
   ;; Move 2 lỗ
