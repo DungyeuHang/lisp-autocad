@@ -113,7 +113,7 @@
   )
 
   ;; ===== DỊCH CHUYỂN =====
-  (command "move" upperCircle "" '(0 0 0) '(0 -9 0))
+  (command "move" upperCircle "" '(0 0 0) '(0 -10 0))
   (command "move" lowerCircle "" '(0 0 0) '(0 -10 0))
 
   ;; ===== INSERT + EXPLODE =====
@@ -217,7 +217,7 @@
   )
 
   ;; ===== DỊCH CHUYỂN =====
-  (command "move" upperCircle "" '(0 0 0) '(0 -9 0))
+  (command "move" upperCircle "" '(0 0 0) '(0 -10 0))
   (command "move" lowerCircle "" '(0 0 0) '(0 -10 0))
 
   ;; ===== INSERT + EXPLODE =====
