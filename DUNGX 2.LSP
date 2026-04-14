@@ -121,10 +121,10 @@
   (setq centerTwo (cdr (assoc 10 (entget lowerCircle))))
 
   (insertBlockExplode blockUpper centerOne)
-  (command "explode" (entlast))
+  ;(command "explode" (entlast))
 
   (insertBlockExplode blockLower centerTwo)
-  (command "explode" (entlast))
+  ;(command "explode" (entlast))
 )
 
 
@@ -225,10 +225,10 @@
   (setq centerTwo (cdr (assoc 10 (entget lowerCircle))))
 
   (insertBlockExplode blockUpper centerOne)
-  (command "explode" (entlast))
+  ;(command "explode" (entlast))
 
   (insertBlockExplode blockLower centerTwo)
-  (command "explode" (entlast))
+  ;(command "explode" (entlast))
 )
 
 ;;;;;;;;;;;;;;;;;;; End of 535 ;;;;;;;;;;;;;;;;;;;;;;
@@ -327,10 +327,10 @@
   (setq centerTwo (cdr (assoc 10 (entget lowerCircle))))
 
   (insertBlockExplode blockUpper centerOne)
-  (command "explode" (entlast))
+  ;(command "explode" (entlast))
 
   (insertBlockExplode blockLower centerTwo)
-  (command "explode" (entlast))
+  ;(command "explode" (entlast))
 )
 
 
