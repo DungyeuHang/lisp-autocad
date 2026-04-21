@@ -433,7 +433,14 @@
   )
 
   ;; Nhập X tâm khóa mới
-  (setq newLockCenterX (getreal "\nNhap X tam khoa moi: "))
+  (setq newLockCenterX
+  (getreal (strcat "\nNhap X tam khoa moi <45>: "))
+  )
+
+  (if (null newLockCenterX)
+    (setq newLockCenterX 45.0)
+  )
+
   (setq offsetDistance (- newLockCenterX 45))
 
   (setq moveUpperHoleVector (list 0 (- (- offsetDistance 0)) 0)) ;UPPER HOLE
