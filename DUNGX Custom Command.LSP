@@ -1782,3 +1782,12 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
   )
   (princ)
 )
+
+; ####################### eND OF DUNGX 
+
+;;;;;;;;;;;;;; SET A FOR PREVIOUS SELECTION 
+; ##### BUT YOU HAVE TO PICK FIRST
+(defun c:A ()
+  (sssetfirst nil (ssget "P"))
+)
+;;;;;;;;;;; END OF A
