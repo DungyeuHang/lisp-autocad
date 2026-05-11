@@ -864,9 +864,12 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 ;***************************************************************************************************************************************************************************************************************
 ;                                 START ............................... VAA VE ARC -VAULT ..................................... =========>;
 
-(defun c:vaa-ve-arc ( / step get-dim-measurement make-rect add-dim ent meas inspt)
+(defun c:vaa-ve-arc ( / oldos step get-dim-measurement get-poly-segment-lengths
+                        adjust-poly-segment-lengths sum-segment-lengths add-polyline-extra
+                        make-rect ent meas inspt segLens)
   (vl-load-com)
-  (setq step 1)
+  (setq step 1
+        oldos (getvar "osmode"))
   (setvar "osmode" 16384)
   
   (defun get-dim-measurement (ent / entObj objType measurement)
@@ -910,7 +913,84 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
 
   ;; Hàm tạo RECTANG + ghi dim
-  (defun make-rect (base-pt len width)
+  ;; Lay chieu dai tung doan cua polyline de them dim tung khuc
+  (defun get-poly-segment-lengths (ent / entObj startParam endParam idx dist1 dist2 segList)
+    (if (and ent
+             (setq entObj (vlax-ename->vla-object ent))
+             (wcmatch (vla-get-ObjectName entObj) "AcDb*Polyline"))
+      (progn
+        (setq startParam (fix (vlax-curve-getStartParam ent))
+              endParam   (fix (vlax-curve-getEndParam ent))
+              idx        startParam
+              segList    '())
+        (while (< idx endParam)
+          (setq dist1   (vlax-curve-getDistAtParam ent idx)
+                dist2   (vlax-curve-getDistAtParam ent (1+ idx))
+                segList (append segList (list (- dist2 dist1))))
+          (setq idx (1+ idx))
+        )
+        (if (> (length segList) 1)
+          segList
+        )
+      )
+    )
+  )
+
+  ;; Cong 0.2 vao doan giua, neu khong phu hop thi cong vao doan cuoi
+  (defun adjust-poly-segment-lengths (segList / idx targetIdx newList)
+    (setq idx 0
+          newList '()
+          targetIdx
+          (cond
+            ((null segList) nil)
+            ((> (length segList) 2) (fix (/ (length segList) 2)))
+            (T (1- (length segList))))
+    )
+    (foreach seg segList
+      (setq newList
+            (append newList
+                    (list
+                      (if (= idx targetIdx)
+                        (+ seg 0.2)
+                        seg
+                      )
+                    )
+            )
+      )
+      (setq idx (1+ idx))
+    )
+    newList
+  )
+
+  (defun sum-segment-lengths (segList / total)
+    (setq total 0.0)
+    (foreach seg segList
+      (setq total (+ total seg))
+    )
+    total
+  )
+
+  ;; Them chuoi dim tren canh tren theo cac doan cua polyline
+  (defun add-polyline-extra (base-pt width segList / x y dimY running startPt endPt dimPt)
+    (if (> (length segList) 1)
+      (progn
+        (setq x       (car base-pt)
+              y       (cadr base-pt)
+              dimY    (+ y width (max 12.0 (* width 0.6)))
+              running x)
+        (foreach seg segList
+          (setq startPt (list running (+ y width))
+                running (+ running seg)
+                endPt   (list running (+ y width))
+                dimPt   (list (/ (+ (car startPt) (car endPt)) 2.0) dimY)
+          )
+          (command "_.DIMLINEAR" "_non" startPt "_non" endPt "_non" dimPt "")
+        )
+      )
+    )
+  )
+
+  (defun make-rect (base-pt len width segList)
     (setq x (car base-pt))
     (setq y (cadr base-pt))
     (setq p1 (list x y))                             ; góc trái dưới
@@ -927,6 +1007,9 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
 
     ;; Tạo DIM chiều rộng: bên phải hình chữ nhật
     (command "DIMLINEAR" p4 p1 (list (- x  100)  y ) "")
+
+    ;; Neu polyline co nhieu doan thi them dim tung doan ben tren
+    (add-polyline-extra base-pt width segList)
   )
   
 
@@ -936,19 +1019,24 @@ nếu n < 0, trả về chuỗi \" - <abs(n)>\"."
     (setq ent (car (entsel)))
     (if (and ent (setq meas (get-dim-measurement ent)))
       (progn
-        (setq meas (+ meas 0.2))
+        (setq segLens (get-poly-segment-lengths ent))
+        (if segLens
+          (setq segLens (adjust-poly-segment-lengths segLens)
+                meas    (sum-segment-lengths segLens))
+          (setq meas (+ meas 0.2))
+        )
         (prompt (strcat "\nChiều dài đo được: " (rtos meas 2 2)))
         (setq inspt (getpoint "\nChọn điểm đặt RECTANG: "))
         (if (= step 1)
-          (make-rect inspt meas 48.8)
-          (make-rect inspt meas 18.8)
+          (make-rect inspt meas 48.8 segLens)
+          (make-rect inspt meas 18.8 segLens)
         )
         (setq step (+ step 1))
       )
       (prompt "\n❌ Không phải DIM hợp lệ hoặc không đo được.")
     )
   )
-  (setvar "osmode" 16383)
+  (setvar "osmode" oldos)
 
   (princ)
 )
