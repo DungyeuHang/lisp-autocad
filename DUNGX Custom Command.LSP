@@ -585,24 +585,24 @@
   (command "copy" doituong "" diemtam "_array" sosong1 (list (- (car diemtam) kctam) (cadr diemtam) ) )
   (setq diemdim1 (list (+ (car diemtam) kctam) (cadr diemtam))) ;diemdim1 cach diemtam =kctam
   (setq diemdim2 (list (car diemtam) (+ (cadr diemtam) 50))) ;;diemdim2 huong len tren truc y
-  (setq diemdim3 (list (+ (+ (car diemtam) (* kctam (- sosong1 1))) dk) (cadr diemtam))) ;diemdim3 ngoai cung ben phai
-  (setq diemdim4 (list (- (+ (car diemtam) (* kctam sosong1 )) dk) (cadr diemtam))) ;diemdim4
-  (setq diemdim5 (list (- (- (car diemtam) (* kctam (- sosong1 1))) dk) (cadr diemtam))) ;diemdim5 ngoai cung ben phai
-  (setq diemdim6 (list (+ (- (car diemtam) (* kctam sosong1 )) dk) (cadr diemtam)))
-  (setq diemdim7 (list (+ (+ (car diemtam) (* kctam 2)) dk) (cadr diemtam))) ;diemdim5 ngoai cung ben phai
-  (setq diemdim8 (list (- (+ (car diemtam) (* kctam 3)) dk) (cadr diemtam)))
+  ;(setq diemdim3 (list (+ (+ (car diemtam) (* kctam (- sosong1 1))) dk) (cadr diemtam))) ;diemdim3 ngoai cung ben phai
+  ;(setq diemdim4 (list (- (+ (car diemtam) (* kctam sosong1 )) dk) (cadr diemtam))) ;diemdim4
+  ;(setq diemdim5 (list (- (- (car diemtam) (* kctam (- sosong1 1))) dk) (cadr diemtam))) ;diemdim5 ngoai cung ben phai
+  ;(setq diemdim6 (list (+ (- (car diemtam) (* kctam sosong1 )) dk) (cadr diemtam)))
+  ;(setq diemdim7 (list (+ (+ (car diemtam) (* kctam 2)) dk) (cadr diemtam))) ;diemdim5 ngoai cung ben phai
+  ;(setq diemdim8 (list (- (+ (car diemtam) (* kctam 3)) dk) (cadr diemtam)))
 
-  (setq diemtext (list (car diemtam) (+ (cadr diemtam) 200))) ;diemtext huong len tren truc y
+  ;(setq diemtext (list (car diemtam) (+ (cadr diemtam) 200))) ;diemtext huong len tren truc y
 
   (command "dimlinear" diemtam diemdim1 diemdim2 )
-  (command "dimlinear"  diemdim3 diemdim4 diemdim2)
-  (command "dimlinear"  diemdim5 diemdim6 diemdim2)
-  (command "dimlinear"  diemdim7 diemdim8 diemdim2)
-  (command "text" diemtext 55 "0" (strcat (rtos sl) " SONG"))
+  ;(command "dimlinear"  diemdim3 diemdim4 diemdim2)
+  ;(command "dimlinear"  diemdim5 diemdim6 diemdim2)
+  ;(command "dimlinear"  diemdim7 diemdim8 diemdim2)
+  ;(command "text" diemtext 55 "0" (strcat (rtos sl) " SONG"))
 
   (command "osmode" 16383)
-  (print "so song la")
-  (print sl)
+  ;(print "so song la")
+  ;(print sl)
   (princ)
 
 )
