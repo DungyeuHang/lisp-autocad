@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0" ProductType="Application" Name="DUNGX_LISP" AppVersion="1.0.26" Description="DUNGX LISP" Author="DUNGX " Icon="./Contents/Resources/icon.ico" OnlineDocumentation="http://lisp.vn/" HelpFile="./Contents/help.html" ProductCode="" AutodeskProduct="AutoCAD" FriendlyVersion="1.0.26" SupportedLocales="Enu" AppNameSpace="appstore.exchange.autodesk.com" UpgradeCode="">
+  <CompanyDetails Name="DUNGX " Phone="+84 387745351" Url="http://lisp.vn/" Email="nguyendungtvhy@gmail.com" />
+  <Components Description="2014-2024">
+    <RuntimeRequirements SupportPath="./Contents" Platform="AutoCAD*" SeriesMin="R19.0" SeriesMax="R25.0" />
+    <ComponentEntry AppName="DUNGX_LISP DUNGX 2" Version="1.0.26" ModuleName="./Contents/Windows/DUNGX 2.LSP" AppDescription="DUNGX LISP" LoadOnAutoCADStartup="True" />
+    <ComponentEntry AppName="DUNGX_LISP DUNGX Custom Command" Version="1.0.26" ModuleName="./Contents/Windows/DUNGX Custom Command.LSP" AppDescription="DUNGX LISP" LoadOnAutoCADStartup="True" />
+  </Components>
+</ApplicationPackage>
