@@ -381,34 +381,40 @@
 
 
 
-
-;        <<<<<<<< Stretch X -SX >>>>>> ;
+; <<<<<<<< Stretch X -SX >>>>>> ;
 (defun c:sx (/ a b keyword hs d1 doituong1 doituong2)
   (prompt "\n🚀 Đang xử lý...")
-  (setq a (getreal "nhap so can set cho a"))
+  (setq a (getreal "\nNhap so can set cho a: "))
   (setq b (/ a 2))
-  (initget 1 "t g") ;tron thoi vuong
-  (setq keyword (getkword "Ban muon stretch TANG <t> hay GIAM <g>"))
+  
+  ;; Bỏ số 1 ở initget để cho phép bấm Enter/Space lấy mặc định
+  (initget "t g")
+  (setq keyword (getkword "\nBan muon stretch TANG hay GIAM [T/G] <T>: "))
+  
+  ;; Nếu bấm Enter (keyword = nil) thì tự lấy "t"
+  (if (null keyword) (setq keyword "t"))
+  
   (cond
-    ((= keyword "t") ;he so 
-     (setq hs 1)) ;
-    ((= keyword "g") ;
-     (setq hs -1 )) ; 
-     ) ;ket thuc cond
+    ((= keyword "t") (setq hs 1))
+    ((= keyword "g") (setq hs -1))
+  )
+  
   (setq d1 (list 0 0))
-  ;(command "osmode" "16384")
   (setvar "osmode" 16384)
- (while
-(setq doituong1 (ssget))
-  (setq doituong2 (ssget))
-  (command "stretch" doituong1 "" d1 (list (- (car d1) (* hs b)) (cadr d1) ) "") ;(command "stretch" )
-  (command "stretch" doituong2 "" d1 (list (+ (car d1) (* hs b)) (cadr d1) ) "")
-)
-  ;(command "osmode" "16383")
+
+  ;; Kiểm tra nếu chọn được doituong1 VÀ doituong2 thì mới stretch
+  ;; Bấm Space/Enter ở bước chọn đối tượng sẽ thoát vòng lặp an toàn
+  (while (and (setq doituong1 (ssget))
+              (setq doituong2 (ssget)))
+    (command "stretch" doituong1 "" d1 (list (- (car d1) (* hs b)) (cadr d1)) "")
+    (command "stretch" doituong2 "" d1 (list (+ (car d1) (* hs b)) (cadr d1)) "")
+  )
+
   (setvar "osmode" 16383)
   (prompt "\n✅ ĐÃ XỬ LÝ XONG.")
+  (princ)
 )
-;;;;;   end of SX   ;;;;;
+;;;;; end of SX ;;;;;
 
 
 
@@ -418,8 +424,10 @@
   (prompt "\n🚀 Đang xử lý...")
   (setq a (getreal "nhap so can set cho a"))
   (setq b (/ a 2))
-  (initget 1 "t g") ;
-  (setq keyword (getkword "Ban muon stretch TANG <t> hay GIAM <g>"))
+  (initget  "t g") ;
+  (setq keyword (getkword "\nBan muon stretch TANG hay GIAM [T/G] <T>: "))
+  ;; Nếu người dùng nhấn Enter (keyword là nil), mặc định lấy "t"
+  (if (null keyword) (setq keyword "t"))
   (cond
     ((= keyword "t") ;he so 
      (setq hs 1)) ;
