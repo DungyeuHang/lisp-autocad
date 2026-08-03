@@ -33,7 +33,7 @@
   (command-s "-layer" "m"	"_mss.bao" "c" 7 "" "lt" "Continuous" "" "")
   (command-s "-layer" "m"	"_mss.dut" "c" 1 "" "lt" "hidden" "" "")
   (command-s "-layer" "m"	"_mss.tam" "c" 1 "" "lt" "center" "" "")
-  (command-s "-layer" "m"	"_mss.kichthuoc" "c" 2 "" "lt" "Continuous" "" "")
+  (command-s "-layer" "m"	"_mss.kichthuoc" "c" 5 "" "lt" "Continuous" "" "")
   (command-s "-layer" "m"	"_mss.cat" "c" 8 "" "lt" "Continuous" "" "")
   (command-s "-layer" "m"	"_mss.phantom" "c" 2 ""	"lt" "Continuous" "" "")
   (command-s "-layer" "m"	"_mss.pro" "c" 6 "" "lt" "Continuous" "" "")
@@ -283,7 +283,7 @@
   (command-s "_.PLINE" PG22 PG29"")
   (command-s "_.PLINE" PG23 PG30"")
   ; 8- HINH CHIEU CHAN KHUNG
-  (command-s "-layer" "m"	"_mss.phantom" "c" 7 "" "lt" "Continuous" "" "")
+  (command-s "-layer" "m"	"_mss.phantom" "c" 2 "" "lt" "Continuous" "" "")
   (command-s "_.PLINE" HCC1 HCC2 HCC3 HCC4 HCC5 HCC6 HCC7"")
   (setq nHCC (entlast))
   (command-s ".offset" 4.8 nHCC (polar HCC1 g90 4)"")
@@ -314,17 +314,159 @@
   (command-s "dimlfac" 1"")
 )
 
+;;PHÀO GIẢ TIÊU CHUẨN CS
+(defun PHAOGIATIEUCHUANcs50 ()
+  
+(setq Camsau (getreal "\n camsautuongbaonhieu:"));;;;HỎI PHẦN CẤM SÂU TRƯỚC KHI CHẠY
+  (if (null Camsau)
+    (setq Camsau 35.0)
+  )
+  
+  (if (< (- bot 30) 20);;;;;;;;;;KIỂM TRA NẾU BOT NHỎ HƠN 15 THÌ KHÔNG CHẠY NỮA
+    (progn
+      ;; Hiện bảng thông báo lỗi
+      (alert "KHÔNG CHẤN ĐƯỢC ĐÂU ÔM TƯỜNG PHẢI 50 TRỞ LÊN!\nTĂNG PHÀO ÔM TƯỜNG LÊN HOẶC DÙNG BIÊN DẠNG KHÁC.")
+      ;; Hủy lệnh và dừng toàn bộ chương trình ngay lập tức
+      (exit) 
+    )
+  )
+  
+  ; ---------------- TAO LAP CAC DIEM ---------------------;-
+(setq
+  ; 1- PHÀO GIẢ NGANG cs
+  PG1  (getpoint "\n Chon diem bat dau:")
+	PG2  (polar PG1 g90 (- Camsau 1))
+	PG3  (polar PG2 g0 1.1)
+	PG4  (polar (polar PG3 g90 14) g0 14)
+	PG5  (polar (polar PG4 g90 21.2) g0 15)
+	PG6  (polar (polar PG5 g90 (- (- bot 30) 1.4)) g0 (- (- bot 30) 1.4))
+	PG7  (polar PG6 g90 13)
+	PG8  (polar (polar PG7 g90 8.8) g180 8.8)
+	PG9   (polar PG1 g180 (- r 2))
+	PG10  (polar PG9 g90 (- Camsau 1))
+	PG11  (polar PG10 g180 1.1)
+	PG12  (polar (polar PG11 g90 14) g180 14)
+	PG13  (polar (polar PG12 g90 21.2) g180 15)
+	PG14  (polar (polar PG13 g90 (- (- bot 30) 1.4)) g180 (- (- bot 30) 1.4))
+	PG15  (polar PG14 g90 13)
+	PG16  (polar (polar PG15 g90 8.8) g0 8.8)
+	
+; 2- PHÀO GIẢ ĐỨNG cs
+  PGD1  (polar PG1 g90 600)
+	PGD2  (polar PGD1 g90 (- Camsau 1))
+	PGD3  (polar PGD2 g0 1.1)
+	PGD4  (polar (polar PGD3 g90 14) g0 14)
+	PGD5  (polar (polar PGD4 g90 21.2) g0 15)
+	PGD6  (polar (polar PGD5 g90 (- (- bot 30) 1.4)) g0 (- (- bot 30) 1.4))
+	PGD7  (polar PGD6 g90 13)
+	PGD8  (polar (polar PGD7 g90 8.8) g180 8.8)
+	PGD9   (polar PGD1 g180 (- c 2))
+	PGD10  (polar PGD9 g90 (- Camsau 1))
+	PGD11  (polar PGD10 g180 1.1)
+	PGD12  (polar (polar PGD11 g90 14) g180 14)
+	PGD13  (polar (polar PGD12 g90 21.2) g180 15)
+	PGD14  (polar (polar PGD13 g90 (- (- bot 30) 1.4)) g180 (- (- bot 30) 1.4))
+	PGD15  (polar PGD14 g90 13)
+	PGD16  (polar (polar PGD15 g90 8.8) g0 8.8)
+  
+; 3- HÌNH CHIẾU CHẤN cs
+	HCC1 (polar PG1 g0 700)
+	HCC2 (polar HCC1 g0 (* Camsau 4))
+	HCC3 (polar HCC2 g90 (* 15 4))
+	HCC4 (polar (polar HCC3 g90 (* 15 4)) g0 (* 15 4))
+	HCC5 (polar HCC4 g90 (* (- bot 30) 4))
+	HCC6 (polar HCC5 g180 (* 15 4))
+	HCC7 (polar HCC6 g270 (* 10 4))
+
+  )
+
+  ; ---------------- NOI BAN VE ----------------------;
+  
+; 1- PHÀO GIẢ NGANG cs
+  (command-s "-layer" "m"	"_mss.bao" "c" 7 "" "lt" "Continuous" "" "")
+  (command-s "text" "style" "VNTIME" (polar (polar PG1 g90 5) g180 150) 5 "0" (princ mdh));;;;GHI CHÚ TÊN 
+  (command-s "text" "style" "VNTIME" (polar PG1 g0 150) 60 "0" (strcat "SL:" (itoa (* 2 slb)))) ;;;SỐ LƯỢNG THANH
+  (command-s ".circle" (polar (polar pg1 g90 8) g180 10) 4"")
+  (command-s ".circle" (polar (polar pg9 g90 8) g0 10) 4"")
+  (setq pg1x1 (polar PG1 g180 5.0)) 
+  (setq pg1x (polar PG1 g90 5.0))  
+  (setq pg9x1 (polar PG9 g0 5.0)) 
+  (setq pg9x (polar PG9 g90 5.0)) 
+  
+  ;; 2. VẼ POLYLINE KẾT HỢP CUNG TRÒN TỰ ĐỘNG cs
+  (command-s "_.PLINE" PG2 PG3 PG4 PG5 PG6 PG7 PG8 PG16 PG15 PG14 PG13 PG12 PG11 PG10 pg9x "_A" pg9x1 "_L" pg1x1 "_A" pg1x "_L" "c")
+  (command-s "-layer" "m"	"_mss.dut" "c" 1 "" "lt" "hidden" "" "")
+  (command-s "_.PLINE" PG2 PG10"")
+  (command-s "_.PLINE" PG4 PG12"")
+  (command-s "_.PLINE" PG5 PG13"")
+  (command-s "_.PLINE" PG6 PG14"")
+  (command-s "_.PLINE" PG7 PG15"")
+ ; 1- PHÀO GIẢ ĐỨNG cs
+  (command-s "-layer" "m"	"_mss.bao" "c" 7 "" "lt" "Continuous" "" "")
+  (command-s "text" "style" "VNTIME" (polar (polar PGD1 g90 5) g180 150) 5 "0" (princ mdh));;;;GHI CHÚ TÊN 
+  (command-s "text" "style" "VNTIME" (polar PGD1 g0 150) 60 "0" (strcat "SL:" (itoa (* 2 slb)))) ;;;SỐ LƯỢNG THANH
+  (command-s ".circle" (polar (polar PGD1 g90 8) g180 10) 4"")
+  (command-s ".circle" (polar (polar PGD9 g90 8) g0 10) 4"")
+  (setq PGD1x1 (polar PGD1 g180 5.0)) 
+  (setq PGD1x (polar PGD1 g90 5.0))  
+  (setq PGD9x1 (polar PGD9 g0 5.0)) 
+  (setq PGD9x (polar PGD9 g90 5.0)) 
+  
+  ;; 2. VẼ POLYLINE KẾT HỢP CUNG TRÒN TỰ ĐỘNG cs
+  (command-s "_.PLINE" PGD2 PGD3 PGD4 PGD5 PGD6 PGD7 PGD8 PGD16 PGD15 PGD14 PGD13 PGD12 PGD11 PGD10 PGD9x "_A" PGD9x1 "_L" PGD1x1 "_A" PGD1x "_L" "c")
+  (command-s "-layer" "m"	"_mss.dut" "c" 1 "" "lt" "hidden" "" "")
+  (command-s "_.PLINE" PGD2 PGD10"")
+  (command-s "_.PLINE" PGD4 PGD12"")
+  (command-s "_.PLINE" PGD5 PGD13"")
+  (command-s "_.PLINE" PGD6 PGD14"")
+  (command-s "_.PLINE" PGD7 PGD15"")
+  ; 8- HINH CHIEU CHAN KHUNG cs
+  (command-s "-layer" "m"	"_mss.phantom" "c" 2 "" "lt" "Continuous" "" "")
+  (command-s "_.PLINE" HCC1 HCC2 HCC3 HCC4 HCC5 HCC6 HCC7"")
+  (setq nHCC (entlast))
+  (command-s ".offset" 4.8 nHCC (polar HCC1 g90 4)"")
+  
+ ; ------------------ DIM KICH THUOC -------------------;
+  ; 1- PHÀO GIẢ NGANG cs
+  (command-s "-layer" "m"	"_mss.kichthuoc" "c" 5 "" "lt" "Continuous" "" "")
+  (command-s "dimlinear" PG1 PG9 (polar (polar PG1 g180 (/ r 2)) g270 100)"")
+  (command-s "dimlinear" PG9 PG16 (polar PG13 g180 150)"")
+  (command-s "dimlinear" PG7 PG15 (polar (polar PG7 g90 100) g180 (/ r 2))"")
+  
+  ; 2- PHÀO GIẢ ĐỨNG cs
+  (command-s "dimlinear" PGD1 PGD9 (polar (polar PGD1 g180 (/ r 2)) g270 100)"")
+  (command-s "dimlinear" PGD9 PGD16 (polar PGD13 g180 150)"")
+  (command-s "dimlinear" PGD7 PGD15 (polar (polar PGD7 g90 100) g180 (/ r 2))"")
+
+  ; 3- HINH CHIEU CHAN KHUNG cs
+  (command-s "dimlfac" 0.25"")
+  (command-s "dimlinear" HCC1 HCC2 (polar (Polar HCC1 g270 120) g0 (* Camsau 2))"")
+  (command-s "dimlinear" HCC2 HCC3 (polar (Polar HCC2 g90 30) g0 120)"")
+  (command-s "dimaligned"  HCC3 HCC4 (polar (Polar HCC3 g45 42) g0 300)"")
+  ;(command "_.DIMANGULAR" "" HCC3 HCC2 HCC4 (polar (Polar HCC3 g0 300) g270 150) "")
+  (command-s "dimlinear" HCC4 HCC5 (polar (Polar HCC4 g90 (* bot 4)) g0 200)"")
+  (command-s "dimlinear" HCC5 HCC6 (polar (Polar HCC5 g180 30) g90 100)"")
+  (command-s "dimlinear" HCC6 HCC7 (polar (Polar HCC6 g180 100) g270 20)"")
+  (command-s "dimlinear" HCC6 HCC1 (polar (Polar HCC1 g90 (/ bot 2)) g180 150)"")
+  (command-s "dimlfac" 1"")
+)
+
+
+
+
+
 ; ---------------- LENH CHAY BAN VE  ----------------------;
 ;----------01------------
 (defun c:PPP1 ()
    (khoitao)
    (hopthoai)
    (setq t-start (getvar "DATE")) ; thời điểm người bắt đầu tương tác
-   (PHAOGIATIEUCHUAN50)
+   (if (vl-string-search "S" mc)
+     (PHAOGIATIEUCHUANcs50)
+     (PHAOGIATIEUCHUAN50)
+   )
    (ketthuc)
    (setq t-end (getvar "DATE"))
    (setq elapsed (* (- t-end t-start) 86400.0)) ; đổi sang GIAY
    (alert (strcat "TONG THOI GIAN VE: " (rtos elapsed 2 2) " GIAY"))
   )
-
-
