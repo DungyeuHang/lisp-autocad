@@ -125,60 +125,6 @@
 ;;;;;;;;;; end of CES ;;;;;;;;;
 
 
-;;;;;;;;;;;;;;;;;;  < Dungx auto insert SIGNATURE by frame > ;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  DUNGX – AUTO INSERT SIGNATURE BY FRAME (FINAL)         ;;
-;;  Sort order: TOP → DOWN, LEFT → RIGHT                  ;;
-;;  Y : DESCENDING                                         ;;
-;;  X : ASCENDING                                          ;;
-;;  Frame layer : _mss.in                                  ;;
-;;  Text  layer : _mss.phantom                             ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(vl-load-com)
-
-;; ---------------------------------------------------------
-;; Create text helper
-(defun create-text (point text-string text-height text-layer
-                    / document modelspace text-object)
-  (setq document   (vla-get-ActiveDocument (vlax-get-acad-object)))
-  (setq modelspace (vla-get-ModelSpace document))
-  (setq text-object
-        (vla-AddText
-          modelspace
-          text-string
-          (vlax-3d-point point)
-          text-height
-        )
-  )
-  (vla-put-Layer text-object text-layer)
-  text-object
-)
-
-;; ---------------------------------------------------------
-(defun sort-frames-left-to-right (ss / idx ent maxpt lst)
-  (setq idx 0 lst '())
-
-  (while (< idx (sslength ss))
-    (setq ent (ssname ss idx))
-    (vla-getBoundingBox
-      (vlax-ename->vla-object ent)
-      'minpt
-      'maxpt
-    )
-    (setq maxpt (vlax-safearray->list maxpt))
-
-    ;; lưu (Xmax . entity)
-    (setq lst (cons (cons (car maxpt) ent) lst))
-    (setq idx (1+ idx))
-  )
-
-  ;; sort X tăng dần (trái → phải)
-  (vl-sort lst '(lambda (a b) (< (car a) (car b))))
-)
-
-
 
 
 ;       <<<<<<<< full osmode -SS >>>>>>>          ;
@@ -1329,7 +1275,58 @@
 ;;;;;;;;;;;;;;;; END OF CCC
 
 
+;;;;;;;;;;;;;;;;;;  < Dungx auto insert SIGNATURE by frame > ;;;;;;;;;;;;;;;;;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  DUNGX – AUTO INSERT SIGNATURE BY FRAME (FINAL)         ;;
+;;  Sort order: TOP → DOWN, LEFT → RIGHT                  ;;
+;;  Y : DESCENDING                                         ;;
+;;  X : ASCENDING                                          ;;
+;;  Frame layer : _mss.in                                  ;;
+;;  Text  layer : _mss.phantom                             ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(vl-load-com)
+
+;; ---------------------------------------------------------
+;; Create text helper
+(defun create-text (point text-string text-height text-layer
+                    / document modelspace text-object)
+  (setq document   (vla-get-ActiveDocument (vlax-get-acad-object)))
+  (setq modelspace (vla-get-ModelSpace document))
+  (setq text-object
+        (vla-AddText
+          modelspace
+          text-string
+          (vlax-3d-point point)
+          text-height
+        )
+  )
+  (vla-put-Layer text-object text-layer)
+  text-object
+)
+;; ---------------------------------------------------------
+(defun sort-frames-left-to-right (ss / idx ent maxpt lst)
+  (setq idx 0 lst '())
+
+  (while (< idx (sslength ss))
+    (setq ent (ssname ss idx))
+    (vla-getBoundingBox
+      (vlax-ename->vla-object ent)
+      'minpt
+      'maxpt
+    )
+    (setq maxpt (vlax-safearray->list maxpt))
+
+    ;; lưu (Xmax . entity)
+    (setq lst (cons (cons (car maxpt) ent) lst))
+    (setq idx (1+ idx))
+  )
+
+  ;; sort X tăng dần (trái → phải)
+  (vl-sort lst '(lambda (a b) (< (car a) (car b))))
+)
 
 (defun dungx-eq (a b /)
   (< (abs (- a b)) 1e-8)
