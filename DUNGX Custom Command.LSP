@@ -286,9 +286,38 @@
   *ll-reactor*
 )
 
-(defun c:WW-SET-LAST ( / )
+;; Ham phu: gop 2 selection set thanh 1, khong trung lap
+(defun ll-merge-ss (ss1 ss2 / i n new)
+  (setq new (ssadd))
+  (if (and ss1 (> (sslength ss1) 0))
+    (repeat (setq i (sslength ss1))
+      (setq i (1- i))
+      (setq n (ssname ss1 i))
+      (setq new (ssadd n new))
+    )
+  )
+  (if (and ss2 (> (sslength ss2) 0))
+    (repeat (setq i (sslength ss2))
+      (setq i (1- i))
+      (setq n (ssname ss2 i))
+      (setq new (ssadd n new)) ; ssadd tu dong bo qua neu da co trong new
+    )
+  )
+  new
+)
+
+(defun c:WW-SET-LAST ( / newBatch prevSet l )
   (ll-ensure-reactor)
-  (setq l *ll-last-batch*)
+
+  ;; Batch doi tuong moi tao (tu reactor)
+  (setq newBatch *ll-last-batch*)
+
+  ;; Selection set duoc chon/tao gan nhat (tuong duong go P tai Select objects:)
+  (setq prevSet (ssget "P"))
+
+  ;; Gop lai thanh 1 selection set duy nhat
+  (setq l (ll-merge-ss newBatch prevSet))
+
   (if (and l (> (sslength l) 0))
     (progn
       (sssetfirst nil l)
@@ -296,13 +325,13 @@
         (strcat
           "\nDa luu "
           (itoa (sslength l))
-          " doi tuong moi cua lenh "
+          " doi tuong (moi tao + previous selection) cua lenh "
           (if *ll-last-command* *ll-last-command* "?")
           " vao bien L. Go !L de dung lai."
         )
       )
     )
-    (prompt "\nKhong tim thay batch doi tuong moi cua lenh gan nhat.")
+    (prompt "\nKhong tim thay doi tuong nao (moi tao hoac previous) de luu.")
   )
   (princ)
 )
