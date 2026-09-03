@@ -791,7 +791,7 @@
       (progn
         (setq x       (car base-pt)
               y       (cadr base-pt)
-              dimY    (+ y width (max 12.0 (* width 0.6)))
+              dimY    (+ y width 50 (max 12.0 (* width 0.6)))
               running x)
         (foreach seg segList
           (setq startPt (list running (+ y width))
