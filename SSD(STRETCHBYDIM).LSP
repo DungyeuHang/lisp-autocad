@@ -1,34 +1,4 @@
-;;; ============================================================================
-;;;  SSD (STRETCH BY DIM) - AutoLISP
-;;;
-;;;  SSD  : chon 2 DIM -> L = |DIM1 - DIM2|      -> stretch 1 luot.
-;;;  SSD2 : chon 2 DIM -> L = |DIM1 - DIM2| / 2  -> stretch 2 luot
-;;;                                                 (cho ket cau doi xung).
-;;;  SSDL : nhap L bang tay                      -> stretch 1 luot.
-;;;
-;;;  Cach dung:
-;;;    1. Chon dim goc, roi chon dim hien hanh -> LISP tu tinh L.
-;;;    2. Quet 1 hoac nhieu crossing window (nhu STRETCH goc).
-;;;       - Go R de doi che do THEM / TRU (window sau se loai doi tuong khoi tap chon).
-;;;       - Go L de nhap lai L, go X de lay L = L/2.
-;;;       - Enter khi chua quet window nao   -> thoat command.
-;;;       - Enter sau khi da quet >= 1 window -> sang buoc stretch.
-;;;    3. Click diem dau, roi re chuot va click de chon huong.
-;;;       Huong duoc lam tron ve 1 trong 4 truc: X+, X-, Y+, Y- (theo UCS hien hanh).
-;;;       Khoang dich chuyen luon dung bang L, khong phu thuoc diem click thu 2.
-;;;    4. Sau moi luot, command tu quay lai buoc 2 de lam tiep.
-;;;       Enter (khi chua quet window) hoac Esc de ket thuc.
-;;;
-;;;  Ghi chu ky thuat:
-;;;    - Phan stretch cuoi goi thang STRETCH goc cua AutoCAD (voi dung cac crossing
-;;;      window da quet) nen hanh vi giong het STRETCH lam tay.
-;;;    - OSMODE duoc tat tam thoi de diem click khong bi OSNAP keo lech, va duoc
-;;;      khoi phuc khi ket thuc hoac khi Esc.
-;;;    - L duoc luu lai giua cac lan chay (registry, key "SSD_LENGTH").
-;;;    - Toan bo prompt viet khong dau de khong phu thuoc encoding cua file LISP.
-;;;
-;;;  Load: APPLOAD hoac keo file vao man hinh AutoCAD.
-;;; ============================================================================
+
 
 (setq *ssd-tol* 1e-6)
 
@@ -445,16 +415,5 @@
   (princ)
 )
 
-;; SSDL : nhap L bang tay 
-(defun C:SS-SMART-STRETCH ()
-  (ssd:len-get)
-  (ssd:len-prompt)
-  (if (> (abs (ssd:len-get)) *ssd-tol*)
-    (ssd:run "SSDL" 1)
-    (princ "\nSSDL - L khong hop le.")
-  )
-  (princ)
-)
-
-(princ "\nSSD(STRETCHBYDIM).LSP da load. Commands: SSD | SSD2 | SSDL")
+(princ "\nSSD(STRETCHBYDIM).LSP da load. Commands: SSD | SSD2")
 (princ)
