@@ -232,7 +232,10 @@
   (setq up (strcase cmd))
   (or (= up "LL")
       (= up "LLON")
-      (= up "LLOFF"))
+      (= up "LLOFF")
+      (= up "EE")
+      (= up "WW")
+      (= up "WW-SET-LAST"))
 )
 
 (defun ll-reactor-start (reactor params / cmd)
@@ -335,6 +338,53 @@
   )
   (princ)
 )
+
+;         <<<<< Set last - CHI lay doi tuong MOI TAO -EE >>>>
+;; EE: giong WW nhung CHI lay cac doi tuong moi nhat vua duoc tao ra
+;; boi lenh truoc do, KHONG gop them previous selection nhu WW.
+
+;; Ham phu: loc bo cac doi tuong da bi xoa khoi selection set
+(defun ll-ss-alive (ss / i n new)
+  (setq new (ssadd))
+  (if (and ss (> (sslength ss) 0))
+    (repeat (setq i (sslength ss))
+      (setq i (- i 1))
+      (setq n (ssname ss i))
+      (if (and n (not (vl-catch-all-error-p (vl-catch-all-apply 'entget (list n)))))
+        (setq new (ssadd n new))
+      )
+    )
+  )
+  new
+)
+
+(defun c:EE ( / )
+  (ll-ensure-reactor)
+
+  ;; Chi lay batch doi tuong moi tao cua lenh gan nhat (tu reactor)
+  (setq l (ll-ss-alive *ll-last-batch*))
+
+  (if (and l (> (sslength l) 0))
+    (progn
+      (sssetfirst nil l)
+      (prompt
+        (strcat
+          "\nDa luu "
+          (itoa (sslength l))
+          " doi tuong MOI TAO cua lenh "
+          (if *ll-last-command* *ll-last-command* "?")
+          " vao bien L. Go !L de dung lai."
+        )
+      )
+    )
+    (progn
+      (setq l nil)
+      (prompt "\nKhong tim thay doi tuong moi tao nao cua lenh gan nhat.")
+    )
+  )
+  (princ)
+)
+;;;;;;;; end of EE ;;;;;;
 
 (defun c:LLON ( / )
   (ll-ensure-reactor)
