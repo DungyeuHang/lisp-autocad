@@ -1386,9 +1386,247 @@
   text-object
 )
 ;; ---------------------------------------------------------
-(defun sort-frames-left-to-right (ss / idx ent maxpt lst)
-  (setq idx 0 lst '())
+;; Helper: Kiểm tra 2 khung có cùng cột không (độ trùng khớp theo phương X)
+(defun dungx-same-col-p (f1 f2 / xmin1 xmax1 w1 xmin2 xmax2 w2 ov minw)
+  (setq xmin1 (nth 0 f1)
+        xmax1 (nth 2 f1)
+        w1    (- xmax1 xmin1)
+        xmin2 (nth 0 f2)
+        xmax2 (nth 2 f2)
+        w2    (- xmax2 xmin2)
+        ov    (- (min xmax1 xmax2) (max xmin1 xmin2))
+        minw  (min w1 w2)
+  )
+  (and (> minw 1e-4) (> ov (* 0.3 minw)))
+)
 
+;; Helper: Kiểm tra 2 khung có cùng hàng không (độ trùng khớp theo phương Y)
+(defun dungx-same-row-p (f1 f2 / ymin1 ymax1 h1 ymin2 ymax2 h2 ov minh)
+  (setq ymin1 (nth 1 f1)
+        ymax1 (nth 3 f1)
+        h1    (- ymax1 ymin1)
+        ymin2 (nth 1 f2)
+        ymax2 (nth 3 f2)
+        h2    (- ymax2 ymin2)
+        ov    (- (min ymax1 ymax2) (max ymin1 ymin2))
+        minh  (min h1 h2)
+  )
+  (and (> minh 1e-4) (> ov (* 0.3 minh)))
+)
+
+;; Helper: Gom nhóm các khung thành từng CỘT
+(defun dungx-group-into-columns (frames / cols cur-col remaining changed rem-new)
+  (setq cols nil)
+  (setq remaining frames)
+  (while remaining
+    (setq cur-col (list (car remaining)))
+    (setq remaining (cdr remaining))
+    (setq changed T)
+    (while changed
+      (setq changed nil)
+      (setq rem-new nil)
+      (foreach other remaining
+        (if (vl-some '(lambda (f) (dungx-same-col-p f other)) cur-col)
+          (progn
+            (setq cur-col (cons other cur-col))
+            (setq changed T)
+          )
+          (setq rem-new (cons other rem-new))
+        )
+      )
+      (setq remaining (reverse rem-new))
+    )
+    (setq cols (cons cur-col cols))
+  )
+  (reverse cols)
+)
+
+;; Helper: Gom nhóm các khung thành từng HÀNG
+(defun dungx-group-into-rows (frames / rows cur-row remaining changed rem-new)
+  (setq rows nil)
+  (setq remaining frames)
+  (while remaining
+    (setq cur-row (list (car remaining)))
+    (setq remaining (cdr remaining))
+    (setq changed T)
+    (while changed
+      (setq changed nil)
+      (setq rem-new nil)
+      (foreach other remaining
+        (if (vl-some '(lambda (f) (dungx-same-row-p f other)) cur-row)
+          (progn
+            (setq cur-row (cons other cur-row))
+            (setq changed T)
+          )
+          (setq rem-new (cons other rem-new))
+        )
+      )
+      (setq remaining (reverse rem-new))
+    )
+    (setq rows (cons cur-row rows))
+  )
+  (reverse rows)
+)
+
+;; Tọa độ bao của Cột / Hàng
+(defun dungx-col-min-x (col /)
+  (apply 'min (mapcar 'car col))
+)
+
+(defun dungx-col-max-x (col /)
+  (apply 'max (mapcar '(lambda (f) (nth 2 f)) col))
+)
+
+(defun dungx-row-min-y (row /)
+  (apply 'min (mapcar '(lambda (f) (nth 1 f)) row))
+)
+
+(defun dungx-row-max-y (row /)
+  (apply 'max (mapcar '(lambda (f) (nth 3 f)) row))
+)
+
+;; So sánh thứ tự Cột / Hàng
+(defun dungx-col-cmp-lr (c1 c2 / x1 x2 tol)
+  (setq x1 (dungx-col-min-x c1)
+        x2 (dungx-col-min-x c2)
+        tol 1e-3)
+  (if (> (abs (- x1 x2)) tol)
+    (< x1 x2)
+    nil
+  )
+)
+
+(defun dungx-col-cmp-rl (c1 c2 / x1 x2 tol)
+  (setq x1 (dungx-col-max-x c1)
+        x2 (dungx-col-max-x c2)
+        tol 1e-3)
+  (if (> (abs (- x1 x2)) tol)
+    (> x1 x2)
+    nil
+  )
+)
+
+(defun dungx-row-cmp-td (r1 r2 / y1 y2 tol)
+  (setq y1 (dungx-row-max-y r1)
+        y2 (dungx-row-max-y r2)
+        tol 1e-3)
+  (if (> (abs (- y1 y2)) tol)
+    (> y1 y2)
+    nil
+  )
+)
+
+(defun dungx-row-cmp-bu (r1 r2 / y1 y2 tol)
+  (setq y1 (dungx-row-min-y r1)
+        y2 (dungx-row-min-y r2)
+        tol 1e-3)
+  (if (> (abs (- y1 y2)) tol)
+    (< y1 y2)
+    nil
+  )
+)
+
+;; So sánh các khung TRONG CÙNG 1 CỘT (Trên -> Dưới, Trái -> Phải)
+(defun dungx-compare-td-lr (a b / ya yb xa xb tol)
+  (setq ya (nth 3 a) ; ymax
+        yb (nth 3 b) ; ymax
+        tol 1e-3)
+  (if (> (abs (- ya yb)) tol)
+    (> ya yb) ; Trên xuống Dưới
+    (progn
+      (setq xa (nth 0 a) ; xmin
+            xb (nth 0 b))
+      (if (> (abs (- xa xb)) tol)
+        (< xa xb) ; Trái qua Phải
+        nil
+      )
+    )
+  )
+)
+
+;; So sánh các khung TRONG CÙNG 1 CỘT (Trên -> Dưới, Phải -> Trái)
+(defun dungx-compare-td-rl (a b / ya yb xa xb tol)
+  (setq ya (nth 3 a) ; ymax
+        yb (nth 3 b) ; ymax
+        tol 1e-3)
+  (if (> (abs (- ya yb)) tol)
+    (> ya yb) ; Trên xuống Dưới
+    (progn
+      (setq xa (nth 2 a) ; xmax
+            xb (nth 2 b))
+      (if (> (abs (- xa xb)) tol)
+        (> xa xb) ; Phải qua Trái
+        nil
+      )
+    )
+  )
+)
+
+;; So sánh các khung TRONG CÙNG 1 CỘT (Dưới -> Trên, Trái -> Phải)
+(defun dungx-compare-bu-lr (a b / ya yb xa xb tol)
+  (setq ya (nth 1 a) ; ymin
+        yb (nth 1 b) ; ymin
+        tol 1e-3)
+  (if (> (abs (- ya yb)) tol)
+    (< ya yb) ; Dưới lên Trên
+    (progn
+      (setq xa (nth 0 a) ; xmin
+            xb (nth 0 b))
+      (if (> (abs (- xa xb)) tol)
+        (< xa xb) ; Trái qua Phải
+        nil
+      )
+    )
+  )
+)
+
+;; So sánh các khung TRONG CÙNG 1 CỘT (Dưới -> Trên, Phải -> Trái)
+(defun dungx-compare-bu-rl (a b / ya yb xa xb tol)
+  (setq ya (nth 1 a) ; ymin
+        yb (nth 1 b) ; ymin
+        tol 1e-3)
+  (if (> (abs (- ya yb)) tol)
+    (< ya yb) ; Dưới lên Trên
+    (progn
+      (setq xa (nth 2 a) ; xmax
+            xb (nth 2 b))
+      (if (> (abs (- xa xb)) tol)
+        (> xa xb) ; Phải qua Trái
+        nil
+      )
+    )
+  )
+)
+
+;; So sánh các khung TRONG CÙNG 1 HÀNG (Trái -> Phải, Trên -> Dưới)
+(defun dungx-compare-lr-td (a b / xa xb ya yb tol)
+  (setq xa (nth 0 a) ; xmin
+        xb (nth 0 b) ; xmin
+        tol 1e-3)
+  (if (> (abs (- xa xb)) tol)
+    (< xa xb) ; Trái qua Phải
+    (progn
+      (setq ya (nth 3 a) ; ymax
+            yb (nth 3 b))
+      (if (> (abs (- ya yb)) tol)
+        (> ya yb) ; Trên xuống Dưới
+        nil
+      )
+    )
+  )
+)
+
+;; Sắp xếp frames theo tuỳ chọn mode:
+;; "1" : Cột Trái -> Phải, Trên -> Dưới (Mặc định)
+;; "2" : Cột Phải -> Trái, Trên -> Dưới
+;; "3" : Hàng Trên -> Dưới, Trái -> Phải
+;; "4" : Hàng Dưới -> Trên, Trái -> Phải
+;; "5" : Cột Trái -> Phải, Dưới -> Trên
+;; "6" : Cột Phải -> Trái, Dưới -> Trên
+(defun sort-frames-by-order (ss mode / idx ent minpt maxpt pmin pmax raw-frames cols rows sorted-groups flat-list)
+  (setq idx 0
+        raw-frames '()
+  )
   (while (< idx (sslength ss))
     (setq ent (ssname ss idx))
     (vla-getBoundingBox
@@ -1396,15 +1634,104 @@
       'minpt
       'maxpt
     )
-    (setq maxpt (vlax-safearray->list maxpt))
-
-    ;; lưu (Xmax . entity)
-    (setq lst (cons (cons (car maxpt) ent) lst))
+    (setq pmin (vlax-safearray->list minpt)
+          pmax (vlax-safearray->list maxpt)
+    )
+    ;; lưu (list xmin ymin xmax ymax ent)
+    (setq raw-frames (cons (list (car pmin) (cadr pmin) (car pmax) (cadr pmax) ent) raw-frames))
     (setq idx (1+ idx))
   )
 
-  ;; sort X tăng dần (trái → phải)
-  (vl-sort lst '(lambda (a b) (< (car a) (car b))))
+  (if (or (null mode) (= mode ""))
+    (setq mode "1")
+  )
+
+  (cond
+    ;; Mode 1: Cột Trái -> Phải, Trên -> Dưới
+    ((= mode "1")
+     (setq cols (dungx-group-into-columns raw-frames))
+     (setq sorted-groups (vl-sort cols 'dungx-col-cmp-lr))
+     (setq flat-list
+           (apply 'append
+                  (mapcar '(lambda (col) (vl-sort col 'dungx-compare-td-lr)) sorted-groups)
+           )
+     )
+    )
+
+    ;; Mode 2: Cột Phải -> Trái, Trên -> Dưới
+    ((= mode "2")
+     (setq cols (dungx-group-into-columns raw-frames))
+     (setq sorted-groups (vl-sort cols 'dungx-col-cmp-rl))
+     (setq flat-list
+           (apply 'append
+                  (mapcar '(lambda (col) (vl-sort col 'dungx-compare-td-rl)) sorted-groups)
+           )
+     )
+    )
+
+    ;; Mode 3: Hàng Trên -> Dưới, Trái -> Phải
+    ((= mode "3")
+     (setq rows (dungx-group-into-rows raw-frames))
+     (setq sorted-groups (vl-sort rows 'dungx-row-cmp-td))
+     (setq flat-list
+           (apply 'append
+                  (mapcar '(lambda (row) (vl-sort row 'dungx-compare-lr-td)) sorted-groups)
+           )
+     )
+    )
+
+    ;; Mode 4: Hàng Dưới -> Trên, Trái -> Phải
+    ((= mode "4")
+     (setq rows (dungx-group-into-rows raw-frames))
+     (setq sorted-groups (vl-sort rows 'dungx-row-cmp-bu))
+     (setq flat-list
+           (apply 'append
+                  (mapcar '(lambda (row) (vl-sort row 'dungx-compare-lr-td)) sorted-groups)
+           )
+     )
+    )
+
+    ;; Mode 5: Cột Trái -> Phải, Dưới -> Trên
+    ((= mode "5")
+     (setq cols (dungx-group-into-columns raw-frames))
+     (setq sorted-groups (vl-sort cols 'dungx-col-cmp-lr))
+     (setq flat-list
+           (apply 'append
+                  (mapcar '(lambda (col) (vl-sort col 'dungx-compare-bu-lr)) sorted-groups)
+           )
+     )
+    )
+
+    ;; Mode 6: Cột Phải -> Trái, Dưới -> Trên
+    ((= mode "6")
+     (setq cols (dungx-group-into-columns raw-frames))
+     (setq sorted-groups (vl-sort cols 'dungx-col-cmp-rl))
+     (setq flat-list
+           (apply 'append
+                  (mapcar '(lambda (col) (vl-sort col 'dungx-compare-bu-rl)) sorted-groups)
+           )
+     )
+    )
+
+    ;; Mặc định: Mode 1
+    (t
+     (setq cols (dungx-group-into-columns raw-frames))
+     (setq sorted-groups (vl-sort cols 'dungx-col-cmp-lr))
+     (setq flat-list
+           (apply 'append
+                  (mapcar '(lambda (col) (vl-sort col 'dungx-compare-td-lr)) sorted-groups)
+           )
+     )
+    )
+  )
+
+  ;; Trả về dạng (cons xmax ent) để (cdr frame) lấy ra entity
+  (mapcar '(lambda (f) (cons (nth 2 f) (nth 4 f))) flat-list)
+)
+
+;; Giữ hàm sort-frames-left-to-right cũ để tương thích ngược
+(defun sort-frames-left-to-right (ss /)
+  (sort-frames-by-order ss "1")
 )
 
 (defun dungx-eq (a b /)
@@ -1549,10 +1876,11 @@
 )
 
 (defun c:DUNGX (/ selection-set frame-list frame
-                  entity max-point
+                  entity max-point min-point
                   insert-point date-point number-point
                   current-time date-string year month day formatted-date
-                  offset-x offset-y counter)
+                  offset-x offset-y counter opt mode-desc
+                  old-osmode old-clayer)
 
   (prompt "\n🚀 DUNGX: Auto insert SIGNATURE theo khung in...")
 
@@ -1560,9 +1888,6 @@
   (setq offset-x 330)  ;; thụt trái
   (setq offset-y 100)  ;; thụt xuống
   ;; ==========================================
-
-  (setvar "OSMODE" 0)
-  (setvar "CLAYER" "_mss.phantom")
 
   ;; Check block SIGNATURE
   (if (not (tblsearch "BLOCK" "SIGNATURE"))
@@ -1592,9 +1917,32 @@
     )
   )
 
-  ;; Sort frames
-  (setq frame-list (sort-frames-left-to-right selection-set))
+  ;; Prompt sort option (ghi nhớ lựa chọn trước đó)
+  (if (null *dungx-sort-mode*)
+    (setq *dungx-sort-mode* "1")
+  )
+  (initget "1 2 3 4 5 6")
+  (setq opt
+        (getkword
+          (strcat
+            "\nChọn thứ tự đánh số [1: Cột Trái->Phải / 2: Cột Phải->Trái / 3: Hàng Trên->Dưới / 4: Hàng Dưới->Trên] <"
+            *dungx-sort-mode*
+            ">: "
+          )
+        )
+  )
+  (if (or (null opt) (= opt ""))
+    (setq opt *dungx-sort-mode*)
+    (setq *dungx-sort-mode* opt)
+  )
 
+  ;; Sort frames theo mode đã chọn
+  (setq frame-list (sort-frames-by-order selection-set opt))
+
+  (setq old-osmode (getvar "OSMODE"))
+  (setq old-clayer (getvar "CLAYER"))
+  (setvar "OSMODE" 0)
+  (setvar "CLAYER" "_mss.phantom")
 
   ;; Get system date
   (setq current-time (getvar "CDATE"))
@@ -1609,7 +1957,6 @@
   ;; Insert loop
   (foreach frame frame-list
     (setq entity (cdr frame))
-
 
     (vla-getBoundingBox
       (vlax-ename->vla-object entity)
@@ -1655,14 +2002,28 @@
     (setq counter (1+ counter))
   )
 
-  (setvar "OSMODE" 16383)
-  (setvar "CLAYER" "_mss.kichthuoc")
+  (setvar "OSMODE" (if old-osmode old-osmode 16383))
+  (setvar "CLAYER" (if old-clayer old-clayer "_mss.kichthuoc"))
+
+  (setq mode-desc
+        (cond
+          ((= opt "1") "Cột Trái → Phải, Trên → Dưới")
+          ((= opt "2") "Cột Phải → Trái, Trên → Dưới")
+          ((= opt "3") "Hàng Trên → Dưới, Trái → Phải")
+          ((= opt "4") "Hàng Dưới → Trên, Trái → Phải")
+          ((= opt "5") "Cột Trái → Phải, Dưới → Trên")
+          ((= opt "6") "Cột Phải → Trái, Dưới → Trên")
+          (t "Cột Trái → Phải, Trên → Dưới")
+        )
+  )
 
   (prompt
     (strcat
       "\n✅ HOÀN THÀNH: "
       (itoa (1- counter))
-      " khung đã được đánh số (TRÁI → PHẢI)."
+      " khung đã được đánh số ("
+      mode-desc
+      ")."
     )
   )
   (princ)
