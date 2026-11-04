@@ -809,7 +809,7 @@
           (cond
             ((null segList) nil)
             ((> (length segList) 2) (fix (/ (length segList) 2)))
-            (T (1- (length segList))))
+            (T (- (length segList) 1)))
     )
     (foreach seg segList
       (setq newList
@@ -1772,7 +1772,7 @@
     (setq res nil)
     (setq i 0)
     (while (< i (length pts))
-      (setq pPrev (nth (rem (+ i (1- (length pts))) (length pts)) pts))
+      (setq pPrev (nth (rem (+ i (- (length pts) 1)) (length pts)) pts))
       (setq pCur  (nth i pts))
       (setq pNext (nth (rem (1+ i) (length pts)) pts))
       (if (and (> (length pts) 4)
@@ -2020,7 +2020,7 @@
   (prompt
     (strcat
       "\n✅ HOÀN THÀNH: "
-      (itoa (1- counter))
+      (itoa (- counter 1))
       " khung đã được đánh số ("
       mode-desc
       ")."
